@@ -1,0 +1,623 @@
+---
+title: 'getBotFlows'
+description: 'Retrieve conversation flows for a BuilderBot instance'
+---
+
+## Method Signature
+
+```typescript
+getBotFlows(builderBotId: string): Promise<Flow[]>
+```
+
+Retrieves all conversation flows configured for a specific BuilderBot instance. Flows define the bot's conversational logic, including keywords, responses, and AI integrations.
+
+## Parameters
+
+<ParamField path="builderBotId" type="string" required>
+  The BuilderBot instance ID (not the GestorPro bot ID). This is the `id_builderBot` field from the Bot object.
+</ParamField>
+
+## Returns
+
+<ResponseField name="Promise<Flow[]>" type="Promise">
+  Returns a promise that resolves to an array of Flow objects
+  
+  <Expandable title="Flow" defaultOpen>
+    <ResponseField name="id" type="string" required>
+      Unique identifier for the flow
+    </ResponseField>
+    
+    <ResponseField name="uuid" type="string" required>
+      UUID for the flow
+    </ResponseField>
+    
+    <ResponseField name="name" type="string" required>
+      Internal name of the flow
+    </ResponseField>
+    
+    <ResponseField name="label" type="string" required>
+      Display label for the flow
+    </ResponseField>
+    
+    <ResponseField name="sort" type="number" required>
+      Sort order for flow display
+    </ResponseField>
+    
+    <ResponseField name="sensitive" type="boolean" required>
+      Whether the flow handles sensitive information
+    </ResponseField>
+    
+    <ResponseField name="deletedAt" type="string | null" required>
+      Timestamp if flow was soft-deleted, null otherwise
+    </ResponseField>
+    
+    <ResponseField name="keyword" type="string[]" required>
+      Array of keywords that trigger this flow
+    </ResponseField>
+    
+    <ResponseField name="botId" type="string" required>
+      BuilderBot instance ID this flow belongs to
+    </ResponseField>
+    
+    <ResponseField name="userId" type="string" required>
+      User ID who created/owns the flow
+    </ResponseField>
+    
+    <ResponseField name="createdAt" type="string" required>
+      ISO 8601 timestamp of creation
+    </ResponseField>
+    
+    <ResponseField name="updatedAt" type="string" required>
+      ISO 8601 timestamp of last update
+    </ResponseField>
+    
+    <ResponseField name="options" type="FlowOptions" required>
+      Flow-level options for behavior
+      
+      <Expandable title="FlowOptions">
+        <ResponseField name="listenKeywords" type="boolean">
+          Whether to listen for keywords to trigger flow
+        </ResponseField>
+        <ResponseField name="transcribeAudio" type="boolean">
+          Whether to transcribe audio messages
+        </ResponseField>
+        <ResponseField name="fastEntries" type="boolean">
+          Enable fast entry mode
+        </ResponseField>
+        <ResponseField name="interpretImage" type="boolean">
+          Whether to interpret image content
+        </ResponseField>
+        <ResponseField name="analyzeDocument" type="boolean">
+          Whether to analyze document content
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="answers" type="Answer[]" required>
+      Array of answer/response objects for this flow
+      
+      <Expandable title="Answer">
+        <ResponseField name="id" type="string">
+          Unique identifier for the answer
+        </ResponseField>
+        <ResponseField name="uuid" type="string">
+          UUID for the answer
+        </ResponseField>
+        <ResponseField name="message" type="string">
+          The message text to send
+        </ResponseField>
+        <ResponseField name="type" type="string">
+          Answer type (e.g., "text", "media", "button")
+        </ResponseField>
+        <ResponseField name="sort" type="number">
+          Sort order for multiple answers
+        </ResponseField>
+        <ResponseField name="ref" type="string">
+          Reference identifier
+        </ResponseField>
+        <ResponseField name="cb" type="string">
+          Callback identifier
+        </ResponseField>
+        <ResponseField name="deletedAt" type="string | null">
+          Soft delete timestamp
+        </ResponseField>
+        <ResponseField name="flowId" type="string">
+          Parent flow ID
+        </ResponseField>
+        <ResponseField name="botId" type="string">
+          Bot ID
+        </ResponseField>
+        <ResponseField name="createdAt" type="string">
+          Creation timestamp
+        </ResponseField>
+        <ResponseField name="updatedAt" type="string">
+          Last update timestamp
+        </ResponseField>
+        <ResponseField name="options" type="AnswerOptions">
+          Answer-specific options
+          
+          <Expandable title="AnswerOptions">
+            <ResponseField name="sensitive" type="boolean">
+              Whether answer contains sensitive info
+            </ResponseField>
+            <ResponseField name="capture" type="boolean">
+              Whether to capture user response
+            </ResponseField>
+            <ResponseField name="media" type="string | null">
+              Media URL if answer includes media
+            </ResponseField>
+            <ResponseField name="delay" type="number">
+              Delay in milliseconds before sending
+            </ResponseField>
+            <ResponseField name="gotoFlow" type="string | null">
+              Flow ID to transition to after this answer
+            </ResponseField>
+          </Expandable>
+        </ResponseField>
+        <ResponseField name="contentSettings" type="ContentSettings">
+          Content formatting settings
+          
+          <Expandable title="ContentSettings">
+            <ResponseField name="split" type="boolean">
+              Whether to split long messages
+            </ResponseField>
+            <ResponseField name="interpretLinks" type="boolean">
+              Whether to interpret and preview links
+            </ResponseField>
+          </Expandable>
+        </ResponseField>
+        <ResponseField name="rules" type="any[]">
+          Array of conditional rules for this answer
+        </ResponseField>
+        <ResponseField name="plugins" type="Plugins">
+          Plugin configurations
+          
+          <Expandable title="Plugins">
+            <ResponseField name="openai" type="OpenAiSettings | null">
+              OpenAI assistant configuration
+              
+              <Expandable title="OpenAiSettings">
+                <ResponseField name="assistantId" type="string">
+                  OpenAI assistant ID
+                </ResponseField>
+                <ResponseField name="assistantName" type="string">
+                  Assistant name
+                </ResponseField>
+                <ResponseField name="assistantInstructions" type="string">
+                  System instructions for assistant
+                </ResponseField>
+                <ResponseField name="assistantVectorStoreIds" type="string[]">
+                  Vector store IDs for RAG
+                </ResponseField>
+                <ResponseField name="assistantFileSearch" type="boolean">
+                  Enable file search capability
+                </ResponseField>
+                <ResponseField name="assistantModel" type="string">
+                  OpenAI model (e.g., "gpt-4")
+                </ResponseField>
+                <ResponseField name="assistantProvider" type="string">
+                  AI provider name
+                </ResponseField>
+                <ResponseField name="assistantFiles" type="any[]">
+                  Uploaded files for context
+                </ResponseField>
+              </Expandable>
+            </ResponseField>
+            <ResponseField name="http" type="any | null">
+              HTTP webhook configuration
+            </ResponseField>
+            <ResponseField name="chatPdf" type="any | null">
+              ChatPDF integration
+            </ResponseField>
+            <ResponseField name="shopify" type="any | null">
+              Shopify integration
+            </ResponseField>
+            <ResponseField name="mute" type="any | null">
+              Mute settings
+            </ResponseField>
+            <ResponseField name="schedule" type="any | null">
+              Scheduling configuration
+            </ResponseField>
+            <ResponseField name="intent" type="any | null">
+              Intent detection settings
+            </ResponseField>
+            <ResponseField name="voice" type="any | null">
+              Voice message settings
+            </ResponseField>
+            <ResponseField name="reminder" type="any | null">
+              Reminder configuration
+            </ResponseField>
+            <ResponseField name="notification" type="any | null">
+              Notification settings
+            </ResponseField>
+            <ResponseField name="structuredOutput" type="any | null">
+              Structured output configuration
+            </ResponseField>
+            <ResponseField name="scheduleGoogleCalendar" type="any | null">
+              Google Calendar integration
+            </ResponseField>
+          </Expandable>
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Code Examples
+
+<CodeGroup>
+```typescript Basic Usage
+import { getBotFlows } from './services/api';
+
+async function loadBotFlows(builderBotId: string) {
+  try {
+    const flows = await getBotFlows(builderBotId);
+    console.log(`Found ${flows.length} conversation flows`);
+    
+    flows.forEach(flow => {
+      console.log(`Flow: ${flow.label}`);
+      console.log(`  Keywords: ${flow.keyword.join(', ')}`);
+      console.log(`  Answers: ${flow.answers.length}`);
+    });
+    
+    return flows;
+  } catch (error) {
+    console.error('Failed to load flows:', error);
+    throw error;
+  }
+}
+```
+
+```typescript Find Flow by Keyword
+import { getBotFlows } from './services/api';
+
+async function findFlowByKeyword(
+  builderBotId: string,
+  keyword: string
+): Promise<Flow | null> {
+  const flows = await getBotFlows(builderBotId);
+  
+  const matchingFlow = flows.find(flow =>
+    flow.keyword.some(k => k.toLowerCase() === keyword.toLowerCase())
+  );
+  
+  return matchingFlow || null;
+}
+
+// Usage
+const supportFlow = await findFlowByKeyword('bb_123', 'help');
+if (supportFlow) {
+  console.log(`Found support flow: ${supportFlow.label}`);
+}
+```
+
+```typescript React Component
+import { useState, useEffect } from 'react';
+import { getBotFlows } from './services/api';
+import type { Flow } from './types';
+
+function FlowList({ builderBotId }: { builderBotId: string }) {
+  const [flows, setFlows] = useState<Flow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchFlows() {
+      try {
+        const data = await getBotFlows(builderBotId);
+        // Filter out deleted flows
+        const activeFlows = data.filter(f => !f.deletedAt);
+        setFlows(activeFlows);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load flows');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchFlows();
+  }, [builderBotId]);
+
+  if (loading) return <div>Loading flows...</div>;
+  if (error) return <div>Error: {error}</div>;
+
+  return (
+    <div className="flow-list">
+      <h2>Conversation Flows ({flows.length})</h2>
+      {flows.map(flow => (
+        <div key={flow.id} className="flow-card">
+          <h3>{flow.label}</h3>
+          <div className="flow-keywords">
+            Keywords: {flow.keyword.map(k => (
+              <span key={k} className="keyword-badge">{k}</span>
+            ))}
+          </div>
+          <div className="flow-stats">
+            {flow.answers.length} responses configured
+          </div>
+          {flow.sensitive && (
+            <span className="sensitive-badge">🔒 Sensitive</span>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+```typescript Analyze Flow Complexity
+import { getBotFlows } from './services/api';
+import type { Flow } from './types';
+
+async function analyzeFlowComplexity(builderBotId: string) {
+  const flows = await getBotFlows(builderBotId);
+  
+  const analysis = flows.map(flow => {
+    const hasAI = flow.answers.some(a => a.plugins.openai !== null);
+    const hasMedia = flow.answers.some(a => a.options.media !== null);
+    const hasGoto = flow.answers.some(a => a.options.gotoFlow !== null);
+    const totalAnswers = flow.answers.length;
+    
+    return {
+      name: flow.label,
+      keywords: flow.keyword.length,
+      answers: totalAnswers,
+      features: {
+        aiPowered: hasAI,
+        includesMedia: hasMedia,
+        hasFlowTransitions: hasGoto,
+        transcribesAudio: flow.options.transcribeAudio,
+        interpretsImages: flow.options.interpretImage
+      },
+      complexity: totalAnswers > 5 ? 'High' : totalAnswers > 2 ? 'Medium' : 'Low'
+    };
+  });
+  
+  console.log('Flow Analysis:', analysis);
+  return analysis;
+}
+```
+
+```typescript Extract OpenAI Configurations
+import { getBotFlows } from './services/api';
+
+async function getAIAssistants(builderBotId: string) {
+  const flows = await getBotFlows(builderBotId);
+  
+  const aiConfigs: Array<{
+    flowName: string;
+    assistantId: string;
+    model: string;
+    instructions: string;
+  }> = [];
+  
+  flows.forEach(flow => {
+    flow.answers.forEach(answer => {
+      if (answer.plugins.openai) {
+        aiConfigs.push({
+          flowName: flow.label,
+          assistantId: answer.plugins.openai.assistantId,
+          model: answer.plugins.openai.assistantModel,
+          instructions: answer.plugins.openai.assistantInstructions
+        });
+      }
+    });
+  });
+  
+  return aiConfigs;
+}
+```
+
+```typescript Map Flow Transitions
+import { getBotFlows } from './services/api';
+import type { Flow } from './types';
+
+async function mapFlowTransitions(builderBotId: string) {
+  const flows = await getBotFlows(builderBotId);
+  
+  // Build flow map
+  const flowMap = new Map<string, Flow>();
+  flows.forEach(flow => flowMap.set(flow.id, flow));
+  
+  // Find transitions
+  const transitions: Array<{
+    from: string;
+    to: string;
+    answerMessage: string;
+  }> = [];
+  
+  flows.forEach(flow => {
+    flow.answers.forEach(answer => {
+      if (answer.options.gotoFlow) {
+        const targetFlow = flowMap.get(answer.options.gotoFlow);
+        transitions.push({
+          from: flow.label,
+          to: targetFlow?.label || 'Unknown',
+          answerMessage: answer.message.substring(0, 50) + '...'
+        });
+      }
+    });
+  });
+  
+  return transitions;
+}
+```
+</CodeGroup>
+
+## Response Example
+
+```json
+[
+  {
+    "id": "flow_001",
+    "uuid": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "welcome_flow",
+    "label": "Welcome Message",
+    "sort": 1,
+    "sensitive": false,
+    "deletedAt": null,
+    "keyword": ["hello", "hi", "start"],
+    "botId": "bb_xyz789",
+    "userId": "user_123",
+    "createdAt": "2024-03-10T10:00:00Z",
+    "updatedAt": "2024-03-15T14:30:00Z",
+    "options": {
+      "listenKeywords": true,
+      "transcribeAudio": false,
+      "fastEntries": true,
+      "interpretImage": false,
+      "analyzeDocument": false
+    },
+    "answers": [
+      {
+        "id": "answer_001",
+        "uuid": "660e8400-e29b-41d4-a716-446655440000",
+        "message": "Welcome to our support bot! How can I help you today?",
+        "type": "text",
+        "sort": 1,
+        "ref": "welcome_msg",
+        "cb": "",
+        "deletedAt": null,
+        "flowId": "flow_001",
+        "botId": "bb_xyz789",
+        "createdAt": "2024-03-10T10:00:00Z",
+        "updatedAt": "2024-03-15T14:30:00Z",
+        "options": {
+          "sensitive": false,
+          "capture": false,
+          "media": null,
+          "delay": 1000,
+          "gotoFlow": null
+        },
+        "contentSettings": {
+          "split": false,
+          "interpretLinks": true
+        },
+        "rules": [],
+        "plugins": {
+          "openai": {
+            "assistantId": "asst_abc123",
+            "assistantName": "Support Assistant",
+            "assistantInstructions": "You are a helpful support assistant.",
+            "assistantVectorStoreIds": [],
+            "assistantFileSearch": false,
+            "assistantInterpretMultimedia": null,
+            "assistantSplitParagraphs": null,
+            "assistantModel": "gpt-4",
+            "assistantProvider": "openai",
+            "assistantFiles": []
+          },
+          "http": null,
+          "chatPdf": null,
+          "shopify": null,
+          "mute": null,
+          "schedule": null,
+          "intent": null,
+          "voice": null,
+          "reminder": null,
+          "notification": null,
+          "structuredOutput": null,
+          "scheduleGoogleCalendar": null
+        }
+      }
+    ]
+  }
+]
+```
+
+## Common Use Cases
+
+### Display Flow Summary
+
+```typescript
+async function displayFlowSummary(builderBotId: string) {
+  const flows = await getBotFlows(builderBotId);
+  
+  console.log('=== Conversation Flows ===\n');
+  
+  flows.forEach((flow, index) => {
+    console.log(`${index + 1}. ${flow.label}`);
+    console.log(`   Triggers: ${flow.keyword.join(', ') || 'None'}`);
+    console.log(`   Responses: ${flow.answers.length}`);
+    console.log(`   AI-Powered: ${flow.answers.some(a => a.plugins.openai) ? 'Yes' : 'No'}`);
+    console.log('');
+  });
+}
+```
+
+### Find AI-Powered Flows
+
+```typescript
+async function getAIPoweredFlows(builderBotId: string) {
+  const flows = await getBotFlows(builderBotId);
+  
+  return flows.filter(flow =>
+    flow.answers.some(answer => answer.plugins.openai !== null)
+  );
+}
+```
+
+### Extract All Keywords
+
+```typescript
+async function getAllKeywords(builderBotId: string): Promise<string[]> {
+  const flows = await getBotFlows(builderBotId);
+  
+  const allKeywords = flows.flatMap(flow => flow.keyword);
+  const uniqueKeywords = [...new Set(allKeywords)];
+  
+  return uniqueKeywords.sort();
+}
+```
+
+## Error Handling
+
+```typescript
+import { getBotFlows } from './services/api';
+
+async function safeGetFlows(builderBotId: string) {
+  try {
+    return await getBotFlows(builderBotId);
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message.includes('not found')) {
+        console.error('BuilderBot instance not found');
+        return [];
+      } else if (error.message.includes('Failed to fetch')) {
+        console.error('Network error loading flows');
+        throw new Error('Cannot connect to server. Please check your connection.');
+      }
+    }
+    throw error;
+  }
+}
+```
+
+## Important Notes
+
+<Note>
+The `builderBotId` parameter is the BuilderBot instance ID (`id_builderBot`), not the GestorPro bot ID (`id`).
+</Note>
+
+<Warning>
+Flows with `deletedAt !== null` are soft-deleted and should typically be filtered out in your UI.
+</Warning>
+
+<Note>
+The `answers` array contains the complete conversation logic, including OpenAI configurations, media attachments, and flow transitions.
+</Note>
+
+## Best Practices
+
+1. **Cache flows** - They don't change frequently, so cache them locally
+2. **Filter deleted flows** - Check `deletedAt` field
+3. **Handle empty arrays** - Some bots may have no flows configured
+4. **Parse OpenAI settings** - Extract AI configurations for analysis
+5. **Map flow transitions** - Understand conversation paths
+6. **Monitor complexity** - Track number of flows and answers per bot
+
+## See Also
+
+- [getBots](/api/bots/get-bots) - Get bot to extract `id_builderBot`
+- [Overview](/api/bots/overview) - Understanding bot architecture
+- [updateBot](/api/bots/update-bot) - Update bot system instructions

@@ -1,0 +1,168 @@
+---
+title: Authentication
+description: Multi-tenant authentication system with token verification via WhatsApp or Email
+---
+
+GestorPro uses a secure, passwordless authentication system that verifies users through WhatsApp or Email using time-limited verification codes.
+
+## How Authentication Works
+
+The authentication system provides a seamless login and registration experience with three stages:
+
+<Steps>
+  <Step title="User Identification">
+    Users enter their WhatsApp number or email address to begin the authentication process. The system checks if the account exists.
+  </Step>
+  
+  <Step title="Registration or Verification">
+    - **Existing users**: Receive a 6-digit verification code
+    - **New users**: Complete registration form with personal details
+  </Step>
+  
+  <Step title="Access Granted">
+    After entering the correct verification code, users gain access to their tenant-specific workspace.
+  </Step>
+</Steps>
+
+## Authentication Stages
+
+<Tabs>
+  <Tab title="Login">
+    ### Initial Login Screen
+    
+    Users start by entering their WhatsApp number or email address:
+    
+    - **WhatsApp**: Format like `5493624...`
+    - **Email**: Standard email format like `user@email.com`
+    
+    The system automatically detects whether the identifier exists and routes to the appropriate next stage.
+    
+    <Note>
+      The authentication service communicates with Google Apps Script for user verification and token generation.
+    </Note>
+  </Tab>
+  
+  <Tab title="Verification">
+    ### Token Verification
+    
+    Existing users receive a **6-digit verification code** sent to their WhatsApp or email:
+    
+    - Codes expire in **10 minutes**
+    - Single-use tokens for security
+    - Easy input with formatted text field
+    
+    <Info>
+      Users can return to the login screen to use a different WhatsApp or email if needed.
+    </Info>
+  </Tab>
+  
+  <Tab title="Registration">
+    ### New User Registration
+    
+    New users complete a registration form with the following fields:
+    
+    | Field | Type | Required |
+    |-------|------|----------|
+    | Nombre (First Name) | Text | Yes |
+    | Apellido (Last Name) | Text | Yes |
+    | WhatsApp | Text | Yes |
+    | Email | Email | Yes |
+    | FechaNacimiento (Date of Birth) | Date | Yes |
+    
+    After registration, a verification code is automatically sent to complete the authentication process.
+  </Tab>
+</Tabs>
+
+## Multi-Tenant Architecture
+
+GestorPro's authentication system supports multi-tenancy:
+
+```typescript
+interface AuthProps {
+  onLoginSuccess: (session: { id_sheet: string }) => void;
+}
+```
+
+<CardGroup cols={2}>
+  <Card title="Tenant Isolation" icon="shield">
+    Each authenticated user is associated with a specific `id_sheet` that isolates their data from other tenants.
+  </Card>
+  
+  <Card title="Secure Sessions" icon="lock">
+    Session tokens are verified server-side with time-based expiration for enhanced security.
+  </Card>
+</CardGroup>
+
+## Authentication Flow
+
+```typescript
+type AuthStage = 'login' | 'verify' | 'register';
+
+// API Actions
+const actions = {
+  findUser: 'Checks if user exists',
+  verifyToken: 'Validates verification code',
+  registerUser: 'Creates new user account'
+};
+```
+
+<Accordion title="Authentication API Communication">
+  The Auth component communicates with a Google Apps Script backend:
+  
+  - **Method**: POST requests with JSON payload
+  - **Content-Type**: text/plain (to avoid CORS preflight)
+  - **Response Format**: JSON with success/error indicators
+  - **Configuration**: URL managed via environment variables (`VITE_AUTH_SCRIPT_URL`)
+</Accordion>
+
+## Error Handling
+
+<Warning>
+  The system provides detailed error diagnostics for connection issues. If you see a "Failed to fetch" error, check the browser console (F12) for troubleshooting steps.
+</Warning>
+
+Common error scenarios:
+
+- **Connection errors**: Backend service unavailable
+- **Invalid token**: Expired or incorrect verification code
+- **Missing configuration**: Authentication script URL not properly set
+
+## Security Features
+
+<CardGroup cols={2}>
+  <Card title="Passwordless" icon="key">
+    No passwords to remember or compromise. Each login generates a fresh verification code.
+  </Card>
+  
+  <Card title="Time-Limited Tokens" icon="clock">
+    Verification codes expire after 10 minutes to prevent unauthorized access.
+  </Card>
+  
+  <Card title="Tenant Separation" icon="building">
+    Each user's data is isolated to their specific workspace via unique identifiers.
+  </Card>
+  
+  <Card title="Secure Communication" icon="shield-check">
+    All authentication requests use HTTPS with redirect following enabled.
+  </Card>
+</CardGroup>
+
+## Integration Requirements
+
+<Steps>
+  <Step title="Google Apps Script Setup">
+    Deploy the `script_auth.js` file as a web app with "Anyone" access permissions.
+  </Step>
+  
+  <Step title="Environment Configuration">
+    Set the `VITE_AUTH_SCRIPT_URL` environment variable to your deployed script URL.
+  </Step>
+  
+  <Step title="Database Connection">
+    Ensure Google Sheets or database backend is properly configured for user storage.
+  </Step>
+</Steps>
+
+<Note>
+  Each code change to the authentication script requires a **new deployment** in Google Apps Script.
+</Note>

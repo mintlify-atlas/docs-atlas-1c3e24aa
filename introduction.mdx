@@ -1,0 +1,115 @@
+---
+title: "Welcome to GestorPro"
+description: "A comprehensive business management platform with multi-tenant architecture, AI-powered chatbots, and Google Sheets backend integration"
+---
+
+## What is GestorPro?
+
+GestorPro is a modern business management platform designed for managing projects, clients, and AI-powered chatbots from a single dashboard. Built as a learning project with Gemini AI, it demonstrates enterprise-grade patterns including multi-tenant architecture, token-based authentication, and seamless Google Sheets integration.
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get up and running with GestorPro in minutes
+  </Card>
+  <Card title="Installation" icon="download" href="/installation">
+    Complete installation and setup guide
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/clients/overview">
+    Explore the complete API documentation
+  </Card>
+  <Card title="User Guide" icon="book" href="/guides/managing-projects">
+    Learn how to use GestorPro effectively
+  </Card>
+</CardGroup>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Multi-Tenant Architecture" icon="users">
+    Each user gets their own isolated Google Sheets database, ensuring complete data separation and security
+  </Card>
+  <Card title="Secure Authentication" icon="shield">
+    Token-based authentication with email and WhatsApp verification for secure access
+  </Card>
+  <Card title="Project Management" icon="briefcase">
+    Track projects with status monitoring, budget management, and upcoming deliveries
+  </Card>
+  <Card title="Client Management" icon="address-book">
+    Organize client information with search capabilities and project associations
+  </Card>
+  <Card title="AI-Powered Bots" icon="robot">
+    Manage WhatsApp chatbots with real-time status monitoring and flow configuration
+  </Card>
+  <Card title="Interactive Dashboard" icon="chart-line">
+    Visualize key metrics with charts, analytics, and actionable insights
+  </Card>
+  <Card title="Project Resources" icon="folder">
+    Attach notes, links, and AI prompts to projects for organized collaboration
+  </Card>
+  <Card title="Responsive Design" icon="mobile">
+    Fully responsive interface optimized for desktop, tablet, and mobile devices
+  </Card>
+</CardGroup>
+
+## Architecture Overview
+
+GestorPro uses a serverless architecture powered by Google Apps Script as the backend, with React and TypeScript on the frontend.
+
+<Note>
+  GestorPro was developed as a study project to explore AI integration patterns with Gemini AI and demonstrate modern SaaS architecture principles.
+</Note>
+
+### Technology Stack
+
+- **Frontend**: React 19, TypeScript, Vite, Recharts
+- **Backend**: Google Apps Script (JavaScript)
+- **Database**: Google Sheets (multi-tenant)
+- **Authentication**: Custom token-based system with WhatsApp/Email verification
+- **Bot Integration**: BuilderBot API for WhatsApp chatbots
+- **Styling**: Utility-first CSS with responsive design
+
+## Use Cases
+
+<AccordionGroup>
+  <Accordion title="Freelancers & Consultants">
+    Manage multiple client projects, track budgets, and organize project resources in one centralized platform. Use AI chatbots to automate client communication.
+  </Accordion>
+  <Accordion title="Small Businesses">
+    Track customer relationships, manage ongoing projects, and monitor business metrics through an intuitive dashboard. Deploy chatbots for customer support.
+  </Accordion>
+  <Accordion title="Learning & Development">
+    Study the codebase to understand multi-tenant architecture, serverless backends, and AI chatbot integration patterns in a real-world SaaS application.
+  </Accordion>
+  <Accordion title="Bot Developers">
+    Manage multiple WhatsApp bots, monitor their status in real-time, configure flows, and organize AI prompts for different conversation scenarios.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<Steps>
+  <Step title="Get Started">
+    Follow the [quickstart guide](/quickstart) to set up your first project
+  </Step>
+  <Step title="Configure Backend">
+    Set up [Google Apps Script](/configuration/google-apps-script) backend
+  </Step>
+  <Step title="Deploy">
+    Learn how to [deploy GestorPro](/configuration/deployment) to production
+  </Step>
+  <Step title="Explore Features">
+    Discover all [core features](/features/authentication) and capabilities
+  </Step>
+</Steps>
+
+## Open Source
+
+GestorPro is open source and available on GitHub. Contributions, issues, and feature requests are welcome!
+
+<Card
+  title="View on GitHub"
+  icon="github"
+  href="https://github.com/sanfosx/GestorPro"
+>
+  Star the repository and contribute to the project
+</Card>

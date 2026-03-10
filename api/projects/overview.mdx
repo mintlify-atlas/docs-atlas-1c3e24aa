@@ -1,0 +1,130 @@
+---
+title: 'Project API Overview'
+description: 'Complete API reference for managing projects in GestorPro'
+---
+
+The Project API provides methods to create, read, update, and delete projects in GestorPro. Projects are associated with clients and track important details like budget, timeline, and status.
+
+## Base Concepts
+
+All Project API methods communicate with Google Apps Script backend via the `callAppsScript` function. Each request includes:
+- Authentication via session stored in `localStorage`
+- Sheet ID from the user session
+- Action name and payload data
+
+## Project Interface
+
+The `Project` type represents a project entity:
+
+```typescript
+interface Project {
+  id: string;
+  name: string;
+  clientId: string;
+  clientName?: string;
+  startDate: string;
+  endDate: string;
+  budget: number;
+  status: ProjectStatus;
+}
+```
+
+## Project Status Enum
+
+Projects can have one of four status values:
+
+```typescript
+enum ProjectStatus {
+  NotStarted = 'No Iniciado',
+  InProgress = 'En Progreso',
+  Completed = 'Completado',
+  OnHold = 'En Pausa',
+}
+```
+
+## Available Methods
+
+<CardGroup cols={2}>
+  <Card title="Get Projects" icon="list" href="/api/projects/get-projects">
+    Retrieve all projects from the system
+  </Card>
+  <Card title="Add Project" icon="plus" href="/api/projects/add-project">
+    Create a new project
+  </Card>
+  <Card title="Update Project" icon="pen" href="/api/projects/update-project">
+    Update an existing project
+  </Card>
+  <Card title="Delete Project" icon="trash" href="/api/projects/delete-project">
+    Remove a project from the system
+  </Card>
+</CardGroup>
+
+## Error Handling
+
+All Project API methods can throw errors in the following scenarios:
+
+<Accordion title="Authentication Errors">
+  - **No session found**: User is not authenticated
+  - **Missing sheet ID**: Session is invalid or corrupted
+  
+  ```typescript
+  throw new Error('User is not authenticated. No session found.');
+  throw new Error('ID de hoja de cálculo no encontrado en la sesión.');
+  ```
+</Accordion>
+
+<Accordion title="Network Errors">
+  - **Failed to fetch**: Cannot connect to Google Apps Script backend
+  - **Empty response**: Backend returned no data
+  - **Invalid JSON**: Backend response is malformed
+  
+  ```typescript
+  throw new Error('Respuesta vacía del servidor de Apps Script.');
+  throw new Error('La respuesta del backend no es un JSON válido.');
+  ```
+</Accordion>
+
+<Accordion title="Backend Errors">
+  When the backend returns `success: false`, the error message from the script is thrown:
+  
+  ```typescript
+  throw new Error(response.error || 'Error desconocido en el script de Google.');
+  ```
+</Accordion>
+
+## Usage Example
+
+```typescript
+import { getProjects, addProject, ProjectStatus } from './services/api';
+import type { Project } from './types';
+
+// Fetch all projects
+try {
+  const projects: Project[] = await getProjects();
+  console.log(`Found ${projects.length} projects`);
+} catch (error) {
+  console.error('Failed to fetch projects:', error);
+}
+
+// Create a new project
+try {
+  const newProject = await addProject({
+    name: 'Website Redesign',
+    clientId: 'client-123',
+    startDate: '2026-03-10',
+    endDate: '2026-06-10',
+    budget: 50000,
+    status: ProjectStatus.NotStarted
+  });
+  console.log('Project created:', newProject.id);
+} catch (error) {
+  console.error('Failed to create project:', error);
+}
+```
+
+## Related APIs
+
+- [Client API](/api/clients/overview) - Manage clients associated with projects
+- [Notes API](/api/notes/overview) - Add notes to projects
+- [Links API](/api/links/overview) - Attach links to projects
+- [Prompts API](/api/prompts/overview) - Store AI prompts for projects

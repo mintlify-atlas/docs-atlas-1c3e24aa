@@ -1,0 +1,701 @@
+---
+title: 'Deployment Guide'
+description: 'Deploy GestorPro to Netlify, Vercel, or other hosting platforms with environment configuration'
+---
+
+## Overview
+
+GestorPro is a **static single-page application (SPA)** built with Vite and React. It can be deployed to any static hosting platform that supports modern web applications.
+
+<Note>
+The application requires two Google Apps Script URLs to be configured as environment variables before deployment. See [Environment Variables](/configuration/environment-variables) for details.
+</Note>
+
+## Prerequisites
+
+Before deploying, ensure you have:
+
+<Steps>
+  <Step title="Google Apps Script backends deployed">
+    - Authentication script deployed and URL copied
+    - Data script deployed and URL copied
+    
+    See [Google Apps Script Backend](/configuration/google-apps-script) for setup instructions.
+  </Step>
+
+  <Step title="Environment variables ready">
+    - `VITE_AUTH_SCRIPT_URL` 
+    - `VITE_DATA_SCRIPT_URL`
+    
+    These URLs are required for the application to function.
+  </Step>
+
+  <Step title="Source code in Git repository">
+    Your code should be in a Git repository (GitHub, GitLab, Bitbucket, etc.) for automatic deployments.
+  </Step>
+</Steps>
+
+## Build Process
+
+### Local Build
+
+Test your build locally before deploying:
+
+<CodeGroup>
+```bash Install dependencies
+npm install
+```
+
+```bash Build for production
+npm run build
+```
+
+```bash Preview production build
+npm run preview
+```
+</CodeGroup>
+
+<Steps>
+  <Step title="Set environment variables">
+    Create a `.env` file in your project root:
+    ```bash
+    VITE_AUTH_SCRIPT_URL=https://script.google.com/macros/s/YOUR_AUTH_ID/exec
+    VITE_DATA_SCRIPT_URL=https://script.google.com/macros/s/YOUR_DATA_ID/exec
+    ```
+  </Step>
+
+  <Step title="Run the build">
+    ```bash
+    npm run build
+    ```
+    
+    This creates optimized production files in the `dist/` directory.
+  </Step>
+
+  <Step title="Verify the build">
+    ```bash
+    npm run preview
+    ```
+    
+    Open the provided URL (usually `http://localhost:4173`) to test the production build.
+  </Step>
+</Steps>
+
+<Warning>
+If the build fails with environment variable errors, ensure your `.env` file exists and contains both required variables with the `VITE_` prefix.
+</Warning>
+
+### Build Configuration
+
+The build is configured in `package.json`:
+
+```json
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  }
+}
+```
+
+And `vite.config.ts` (if you have custom configuration):
+
+```javascript
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    minify: 'esbuild'
+  }
+})
+```
+
+## Deploy to Netlify
+
+### Via Netlify UI
+
+<Steps>
+  <Step title="Connect your repository">
+    1. Go to [app.netlify.com](https://app.netlify.com)
+    2. Click **Add new site** → **Import an existing project**
+    3. Connect to your Git provider (GitHub, GitLab, Bitbucket)
+    4. Select your GestorPro repository
+  </Step>
+
+  <Step title="Configure build settings">
+    Set the following build configuration:
+    
+    | Setting | Value |
+    |---------|-------|
+    | **Build command** | `npm run build` |
+    | **Publish directory** | `dist` |
+    | **Node version** | 18 or higher |
+  </Step>
+
+  <Step title="Add environment variables">
+    Before deploying, add your environment variables:
+    
+    1. Click **Show advanced** → **New variable**
+    2. Add `VITE_AUTH_SCRIPT_URL` with your auth script URL
+    3. Add `VITE_DATA_SCRIPT_URL` with your data script URL
+  </Step>
+
+  <Step title="Deploy">
+    Click **Deploy site** and wait for the build to complete.
+  </Step>
+</Steps>
+
+### Via Netlify CLI
+
+<CodeGroup>
+```bash Install Netlify CLI
+npm install -g netlify-cli
+```
+
+```bash Login to Netlify
+netlify login
+```
+
+```bash Initialize site
+netlify init
+```
+
+```bash Set environment variables
+netlify env:set VITE_AUTH_SCRIPT_URL "https://script.google.com/macros/s/YOUR_AUTH_ID/exec"
+netlify env:set VITE_DATA_SCRIPT_URL "https://script.google.com/macros/s/YOUR_DATA_ID/exec"
+```
+
+```bash Deploy to production
+netlify deploy --prod
+```
+</CodeGroup>
+
+### Netlify Configuration File
+
+Create `netlify.toml` in your project root for consistent builds:
+
+```toml
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# Redirect all routes to index.html for SPA
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Optional: Custom headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+```
+
+<Tip>
+The `[[redirects]]` section is crucial for SPAs to handle client-side routing correctly.
+</Tip>
+
+## Deploy to Vercel
+
+### Via Vercel UI
+
+<Steps>
+  <Step title="Connect your repository">
+    1. Go to [vercel.com](https://vercel.com)
+    2. Click **Add New** → **Project**
+    3. Import your Git repository
+  </Step>
+
+  <Step title="Configure project">
+    Vercel auto-detects Vite projects. Verify:
+    
+    | Setting | Value |
+    |---------|-------|
+    | **Framework Preset** | Vite |
+    | **Build Command** | `npm run build` |
+    | **Output Directory** | `dist` |
+    | **Install Command** | `npm install` |
+  </Step>
+
+  <Step title="Add environment variables">
+    1. Expand **Environment Variables**
+    2. Add `VITE_AUTH_SCRIPT_URL` with your auth script URL
+    3. Add `VITE_DATA_SCRIPT_URL` with your data script URL
+    4. Select environments: **Production**, **Preview**, **Development**
+  </Step>
+
+  <Step title="Deploy">
+    Click **Deploy** and wait for the build to complete.
+  </Step>
+</Steps>
+
+### Via Vercel CLI
+
+<CodeGroup>
+```bash Install Vercel CLI
+npm install -g vercel
+```
+
+```bash Login to Vercel
+vercel login
+```
+
+```bash Set environment variables
+vercel env add VITE_AUTH_SCRIPT_URL production
+# Paste your auth script URL when prompted
+
+vercel env add VITE_DATA_SCRIPT_URL production
+# Paste your data script URL when prompted
+```
+
+```bash Deploy to production
+vercel --prod
+```
+</CodeGroup>
+
+### Vercel Configuration File
+
+Create `vercel.json` in your project root:
+
+```json
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+```
+
+<Note>
+The `rewrites` configuration ensures all routes are handled by your SPA router.
+</Note>
+
+## Deploy to Other Platforms
+
+### Cloudflare Pages
+
+<Steps>
+  <Step title="Connect repository">
+    1. Go to [dash.cloudflare.com](https://dash.cloudflare.com)
+    2. Navigate to **Pages** → **Create a project**
+    3. Connect your Git repository
+  </Step>
+
+  <Step title="Configure build">
+    | Setting | Value |
+    |---------|-------|
+    | **Framework preset** | Vite |
+    | **Build command** | `npm run build` |
+    | **Build output directory** | `dist` |
+  </Step>
+
+  <Step title="Add environment variables">
+    In **Settings** → **Environment variables**, add:
+    - `VITE_AUTH_SCRIPT_URL`
+    - `VITE_DATA_SCRIPT_URL`
+  </Step>
+</Steps>
+
+### GitHub Pages
+
+<CodeGroup>
+```yaml .github/workflows/deploy.yml
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm install
+        
+      - name: Build
+        env:
+          VITE_AUTH_SCRIPT_URL: ${{ secrets.VITE_AUTH_SCRIPT_URL }}
+          VITE_DATA_SCRIPT_URL: ${{ secrets.VITE_DATA_SCRIPT_URL }}
+        run: npm run build
+        
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+```
+
+```javascript vite.config.ts
+// Add base path for GitHub Pages
+export default defineConfig({
+  base: '/your-repo-name/',
+  plugins: [react()],
+})
+```
+</CodeGroup>
+
+<Steps>
+  <Step title="Add GitHub Secrets">
+    Go to **Settings** → **Secrets and variables** → **Actions** and add:
+    - `VITE_AUTH_SCRIPT_URL`
+    - `VITE_DATA_SCRIPT_URL`
+  </Step>
+
+  <Step title="Enable GitHub Pages">
+    Go to **Settings** → **Pages** and select **gh-pages** branch as source.
+  </Step>
+
+  <Step title="Push to trigger deployment">
+    ```bash
+    git push origin main
+    ```
+  </Step>
+</Steps>
+
+### Render
+
+<Steps>
+  <Step title="Create Static Site">
+    1. Go to [render.com](https://render.com)
+    2. Click **New** → **Static Site**
+    3. Connect your repository
+  </Step>
+
+  <Step title="Configure build">
+    | Setting | Value |
+    |---------|-------|
+    | **Build Command** | `npm run build` |
+    | **Publish Directory** | `dist` |
+  </Step>
+
+  <Step title="Add environment variables">
+    In **Environment**, add:
+    - `VITE_AUTH_SCRIPT_URL`
+    - `VITE_DATA_SCRIPT_URL`
+  </Step>
+</Steps>
+
+## Environment Configuration
+
+### Managing Multiple Environments
+
+You can use different Google Apps Script deployments for different environments:
+
+<CodeGroup>
+```bash .env.development
+# Development environment (local)
+VITE_AUTH_SCRIPT_URL=https://script.google.com/macros/s/DEV_AUTH_ID/exec
+VITE_DATA_SCRIPT_URL=https://script.google.com/macros/s/DEV_DATA_ID/exec
+```
+
+```bash .env.production
+# Production environment (deployed)
+VITE_AUTH_SCRIPT_URL=https://script.google.com/macros/s/PROD_AUTH_ID/exec
+VITE_DATA_SCRIPT_URL=https://script.google.com/macros/s/PROD_DATA_ID/exec
+```
+</CodeGroup>
+
+<Tip>
+Create separate Google Apps Script deployments for development and production to avoid mixing test and real data.
+</Tip>
+
+### Verifying Configuration
+
+After deployment, verify your environment variables are correctly loaded:
+
+<Steps>
+  <Step title="Open your deployed site">
+    Navigate to your production URL.
+  </Step>
+
+  <Step title="Open browser DevTools">
+    Press F12 or right-click → **Inspect** → **Console**
+  </Step>
+
+  <Step title="Check for errors">
+    Look for any errors from `config.ts`. If you see:
+    ```
+    ERROR: VITE_AUTH_SCRIPT_URL is not defined
+    ```
+    Your environment variables weren't loaded during the build.
+  </Step>
+
+  <Step title="Test authentication">
+    Try to log in. If you get a "Failed to fetch" error, your URLs may be incorrect or your Apps Script deployment has issues.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Build Fails: "Environment variable not defined"
+
+**Problem**: The build fails with an error about missing `VITE_AUTH_SCRIPT_URL` or `VITE_DATA_SCRIPT_URL`.
+
+**Solution**:
+1. Verify you've added the environment variables in your hosting platform's UI
+2. Ensure the variable names are exactly `VITE_AUTH_SCRIPT_URL` and `VITE_DATA_SCRIPT_URL`
+3. Make sure variables are available for the deployment environment (Production, Preview, etc.)
+4. Trigger a new deployment after adding variables
+
+### App Loads but Can't Connect to Backend
+
+**Problem**: The app loads but shows "Failed to fetch" errors when trying to authenticate.
+
+**Solution**:
+
+<Steps>
+  <Step title="Test the URLs">
+    Copy each URL from your hosting platform and paste them in your browser:
+    - Expected: "The script completed but did not return anything"
+    - If error: Your Apps Script deployment is incorrect
+  </Step>
+
+  <Step title="Verify Apps Script permissions">
+    In Google Apps Script:
+    - Click **Deploy** → **Manage deployments**
+    - Ensure "Who has access" is set to **Anyone**
+    - If not, create a new deployment with correct permissions
+  </Step>
+
+  <Step title="Update environment variables">
+    If you created a new deployment, update the URLs in your hosting platform and redeploy.
+  </Step>
+</Steps>
+
+### Page Refresh Returns 404
+
+**Problem**: Navigating to a route like `/clients` works, but refreshing the page shows a 404 error.
+
+**Solution**: Configure your hosting platform to redirect all routes to `index.html`:
+
+<CodeGroup>
+```toml Netlify (netlify.toml)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+```
+
+```json Vercel (vercel.json)
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+```
+
+```yaml Cloudflare Pages
+# Automatically handled by Cloudflare Pages
+# No configuration needed
+```
+</CodeGroup>
+
+### Build Succeeds but App Shows Blank Page
+
+**Problem**: The build completes successfully but the deployed site is blank.
+
+**Solution**:
+
+<Steps>
+  <Step title="Check browser console">
+    Press F12 and look for errors in the Console tab.
+  </Step>
+
+  <Step title="Verify base path">
+    For GitHub Pages or subdirectory deployments, ensure `vite.config.ts` has the correct `base` path.
+  </Step>
+
+  <Step title="Check asset paths">
+    View the page source and verify that CSS/JS files are loading from the correct paths.
+  </Step>
+
+  <Step title="Test locally">
+    Run `npm run build && npm run preview` to test the production build locally.
+  </Step>
+</Steps>
+
+### Environment Variables Not Updating
+
+**Problem**: You updated environment variables but the app still uses old values.
+
+**Solution**:
+
+<Note>
+Environment variables are embedded at **build time**. Changing them requires a **rebuild**.
+</Note>
+
+<Steps>
+  <Step title="Clear build cache">
+    In your hosting platform, look for "Clear cache" or "Clear build cache" options.
+  </Step>
+
+  <Step title="Trigger new deployment">
+    Force a new deployment (Netlify: **Trigger deploy** → **Clear cache and deploy site**).
+  </Step>
+
+  <Step title="Verify in build logs">
+    Check that the build logs show the environment variables being set (they won't show the values, but should indicate they're present).
+  </Step>
+</Steps>
+
+## Performance Optimization
+
+### Build Optimization
+
+Optimize your production build:
+
+```javascript vite.config.ts
+export default defineConfig({
+  plugins: [react()],
+  build: {
+    // Reduce bundle size
+    minify: 'esbuild',
+    
+    // Disable source maps in production
+    sourcemap: false,
+    
+    // Optimize chunk splitting
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          charts: ['recharts'],
+        },
+      },
+    },
+  },
+})
+```
+
+### Caching Headers
+
+Configure caching for static assets:
+
+<CodeGroup>
+```toml Netlify (netlify.toml)
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+```
+
+```json Vercel (vercel.json)
+{
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
+}
+```
+</CodeGroup>
+
+## Custom Domain
+
+Add a custom domain to your deployment:
+
+### Netlify
+
+<Steps>
+  <Step title="Add domain">
+    **Site settings** → **Domain management** → **Add custom domain**
+  </Step>
+
+  <Step title="Configure DNS">
+    Follow Netlify's instructions to add DNS records:
+    - A record: `75.2.60.5`
+    - Or CNAME: `your-site.netlify.app`
+  </Step>
+
+  <Step title="Enable HTTPS">
+    Netlify automatically provisions SSL certificates via Let's Encrypt.
+  </Step>
+</Steps>
+
+### Vercel
+
+<Steps>
+  <Step title="Add domain">
+    **Project Settings** → **Domains** → Add your domain
+  </Step>
+
+  <Step title="Configure DNS">
+    Add a CNAME record:
+    - Name: `@` (or subdomain)
+    - Value: `cname.vercel-dns.com`
+  </Step>
+
+  <Step title="Verify">
+    Vercel will automatically verify and provision SSL.
+  </Step>
+</Steps>
+
+## Monitoring & Analytics
+
+Add monitoring to your deployed application:
+
+### Error Tracking
+
+Integrate error tracking services:
+
+```javascript
+// main.tsx or index.tsx
+import * as Sentry from '@sentry/react';
+
+Sentry.init({
+  dsn: import.meta.env.VITE_SENTRY_DSN,
+  environment: import.meta.env.MODE,
+});
+```
+
+### Analytics
+
+Add analytics tracking:
+
+```html
+<!-- index.html -->
+<script defer data-domain="yourdomain.com" src="https://plausible.io/js/script.js"></script>
+```
+
+## Next Steps
+
+- [Set up monitoring](/guides/monitoring) to track errors and performance
+- [Configure custom domain](/guides/custom-domain) for your production site
+- [Optimize performance](/guides/optimization) with caching and code splitting
+- Learn about [authentication flow](/features/authentication) to understand user session management

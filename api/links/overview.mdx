@@ -1,0 +1,457 @@
+---
+title: 'Links API'
+description: 'Complete API reference for managing links in GestorPro projects'
+icon: 'link'
+---
+
+## Overview
+
+The Links API allows you to manage URLs and external resources associated with projects in GestorPro. Links can reference documentation, resources, tools, or any external content relevant to a project.
+
+## Link Interface
+
+The `Link` type represents a link in the system:
+
+```typescript
+interface Link {
+  id: string;              // Unique identifier
+  projectId: string;       // Associated project ID
+  url: string;             // The URL
+  description: string;     // Link description
+  createdAt: string;       // ISO timestamp
+  isPinned?: boolean;      // Optional pinned status
+}
+```
+
+---
+
+## Methods
+
+<Accordion title="getLinksByProjectId" icon="list">
+
+### Get Links by Project ID
+
+Retrieves all links associated with a specific project.
+
+```typescript
+const getLinksByProjectId = async (projectId: string): Promise<Link[]>
+```
+
+<ParamField path="projectId" type="string" required>
+  The unique identifier of the project
+</ParamField>
+
+<ResponseField name="links" type="Link[]">
+  Array of link objects for the specified project
+  
+  <Expandable title="Link properties">
+    <ResponseField name="id" type="string">
+      Unique identifier for the link
+    </ResponseField>
+    
+    <ResponseField name="projectId" type="string">
+      The project this link belongs to
+    </ResponseField>
+    
+    <ResponseField name="url" type="string">
+      The URL of the link
+    </ResponseField>
+    
+    <ResponseField name="description" type="string">
+      Description of what the link points to
+    </ResponseField>
+    
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp of when the link was created
+    </ResponseField>
+    
+    <ResponseField name="isPinned" type="boolean" optional>
+      Whether the link is pinned to the top
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+#### Example
+
+```typescript
+import { getLinksByProjectId } from './services/api';
+
+const projectLinks = await getLinksByProjectId('proj_123');
+console.log(projectLinks);
+// [
+//   {
+//     id: "link_1",
+//     projectId: "proj_123",
+//     url: "https://docs.example.com",
+//     description: "Project documentation",
+//     createdAt: "2024-03-10T10:30:00Z",
+//     isPinned: true
+//   },
+//   ...
+// ]
+```
+
+</Accordion>
+
+<Accordion title="addLink" icon="plus">
+
+### Add Link
+
+Creates a new link for a project. The `id` and `createdAt` fields are automatically generated.
+
+```typescript
+const addLink = async (linkData: Omit<Link, 'id' | 'createdAt'>): Promise<Link>
+```
+
+<ParamField path="linkData" type="object" required>
+  The link data to create (excluding auto-generated fields)
+  
+  <Expandable title="linkData properties">
+    <ParamField path="projectId" type="string" required>
+      The ID of the project this link belongs to
+    </ParamField>
+    
+    <ParamField path="url" type="string" required>
+      The URL of the link
+    </ParamField>
+    
+    <ParamField path="description" type="string" required>
+      A description of the link
+    </ParamField>
+    
+    <ParamField path="isPinned" type="boolean" optional>
+      Whether to pin the link (defaults to false)
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="link" type="Link">
+  The created link object with generated `id` and `createdAt` fields
+</ResponseField>
+
+#### Example
+
+```typescript
+import { addLink } from './services/api';
+
+const newLink = await addLink({
+  projectId: 'proj_123',
+  url: 'https://github.com/company/project',
+  description: 'Project repository',
+  isPinned: true
+});
+
+console.log(newLink);
+// {
+//   id: "link_456",
+//   projectId: "proj_123",
+//   url: "https://github.com/company/project",
+//   description: "Project repository",
+//   createdAt: "2024-03-10T14:20:00Z",
+//   isPinned: true
+// }
+```
+
+</Accordion>
+
+<Accordion title="updateLink" icon="pen-to-square">
+
+### Update Link
+
+Updates an existing link with new data.
+
+```typescript
+const updateLink = async (linkData: Link): Promise<Link>
+```
+
+<ParamField path="linkData" type="Link" required>
+  The complete link object with updated fields
+  
+  <Expandable title="linkData properties">
+    <ParamField path="id" type="string" required>
+      The ID of the link to update
+    </ParamField>
+    
+    <ParamField path="projectId" type="string" required>
+      The project ID (cannot be changed)
+    </ParamField>
+    
+    <ParamField path="url" type="string" required>
+      Updated URL
+    </ParamField>
+    
+    <ParamField path="description" type="string" required>
+      Updated description
+    </ParamField>
+    
+    <ParamField path="createdAt" type="string" required>
+      Original creation timestamp (should not be modified)
+    </ParamField>
+    
+    <ParamField path="isPinned" type="boolean" optional>
+      Updated pinned status
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="link" type="Link">
+  The updated link object
+</ResponseField>
+
+#### Example
+
+```typescript
+import { updateLink } from './services/api';
+
+const updatedLink = await updateLink({
+  id: 'link_456',
+  projectId: 'proj_123',
+  url: 'https://github.com/company/project-new',
+  description: 'Updated project repository',
+  createdAt: '2024-03-10T14:20:00Z',
+  isPinned: false
+});
+
+console.log(updatedLink);
+// {
+//   id: "link_456",
+//   projectId: "proj_123",
+//   url: "https://github.com/company/project-new",
+//   description: "Updated project repository",
+//   createdAt: "2024-03-10T14:20:00Z",
+//   isPinned: false
+// }
+```
+
+</Accordion>
+
+<Accordion title="deleteLink" icon="trash">
+
+### Delete Link
+
+Deletes a link by its ID.
+
+```typescript
+const deleteLink = async (linkId: string): Promise<{ success: boolean }>
+```
+
+<ParamField path="linkId" type="string" required>
+  The unique identifier of the link to delete
+</ParamField>
+
+<ResponseField name="response" type="object">
+  Deletion confirmation object
+  
+  <Expandable title="response properties">
+    <ResponseField name="success" type="boolean">
+      `true` if the link was successfully deleted, `false` otherwise
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+#### Example
+
+```typescript
+import { deleteLink } from './services/api';
+
+const result = await deleteLink('link_456');
+console.log(result);
+// { success: true }
+
+if (result.success) {
+  console.log('Link deleted successfully');
+}
+```
+
+</Accordion>
+
+---
+
+## Complete Usage Example
+
+<CodeGroup>
+
+```typescript React Component
+import { useState, useEffect } from 'react';
+import { 
+  getLinksByProjectId, 
+  addLink, 
+  updateLink, 
+  deleteLink 
+} from './services/api';
+import type { Link } from './types';
+
+function ProjectLinks({ projectId }: { projectId: string }) {
+  const [links, setLinks] = useState<Link[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load links
+  useEffect(() => {
+    const loadLinks = async () => {
+      try {
+        const data = await getLinksByProjectId(projectId);
+        setLinks(data);
+      } catch (error) {
+        console.error('Failed to load links:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadLinks();
+  }, [projectId]);
+
+  // Create link
+  const handleAddLink = async (url: string, description: string) => {
+    const newLink = await addLink({
+      projectId,
+      url,
+      description,
+      isPinned: false
+    });
+    setLinks([...links, newLink]);
+  };
+
+  // Update link
+  const handleUpdateLink = async (link: Link) => {
+    const updated = await updateLink(link);
+    setLinks(links.map(l => l.id === updated.id ? updated : l));
+  };
+
+  // Delete link
+  const handleDeleteLink = async (linkId: string) => {
+    const result = await deleteLink(linkId);
+    if (result.success) {
+      setLinks(links.filter(l => l.id !== linkId));
+    }
+  };
+
+  // Toggle pin
+  const handleTogglePin = async (link: Link) => {
+    await handleUpdateLink({
+      ...link,
+      isPinned: !link.isPinned
+    });
+  };
+
+  if (loading) return <div>Loading links...</div>;
+
+  return (
+    <div>
+      {links.map(link => (
+        <div key={link.id}>
+          <a href={link.url} target="_blank" rel="noopener">
+            {link.description} {link.isPinned && '📌'}
+          </a>
+          <button onClick={() => handleTogglePin(link)}>Toggle Pin</button>
+          <button onClick={() => handleDeleteLink(link.id)}>Delete</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+```typescript Vanilla JavaScript
+import { 
+  getLinksByProjectId, 
+  addLink, 
+  updateLink, 
+  deleteLink 
+} from './services/api';
+
+// Get all links for a project
+const links = await getLinksByProjectId('proj_123');
+
+// Create a new link
+const newLink = await addLink({
+  projectId: 'proj_123',
+  url: 'https://api.example.com/docs',
+  description: 'API Documentation',
+  isPinned: true
+});
+
+// Update the link
+const updatedLink = await updateLink({
+  ...newLink,
+  description: 'Updated API Documentation'
+});
+
+// Delete the link
+const result = await deleteLink(newLink.id);
+if (result.success) {
+  console.log('Link deleted successfully');
+}
+```
+
+</CodeGroup>
+
+---
+
+## Error Handling
+
+All Links API methods may throw errors. Always wrap calls in try-catch blocks:
+
+```typescript
+try {
+  const links = await getLinksByProjectId(projectId);
+} catch (error) {
+  if (error instanceof Error) {
+    console.error('Failed to fetch links:', error.message);
+  }
+}
+```
+
+### Common Errors
+
+- **Authentication Error**: Session not found or invalid
+- **Connection Error**: Failed to reach the backend script
+- **Validation Error**: Invalid link data or malformed URL
+- **Not Found**: Link or project ID does not exist
+
+---
+
+## Best Practices
+
+### URL Validation
+
+Always validate URLs before adding them:
+
+```typescript
+function isValidUrl(url: string): boolean {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+if (isValidUrl(userInput)) {
+  await addLink({
+    projectId: 'proj_123',
+    url: userInput,
+    description: 'User-provided link'
+  });
+}
+```
+
+### Organizing Links
+
+Use the `isPinned` field to highlight important resources:
+
+```typescript
+// Pin critical documentation
+await addLink({
+  projectId: 'proj_123',
+  url: 'https://docs.critical-service.com',
+  description: 'Critical Service API',
+  isPinned: true
+});
+
+// Sort links with pinned first
+const sortedLinks = links.sort((a, b) => {
+  if (a.isPinned && !b.isPinned) return -1;
+  if (!a.isPinned && b.isPinned) return 1;
+  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+});
+```

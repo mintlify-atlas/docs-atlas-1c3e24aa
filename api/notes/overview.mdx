@@ -1,0 +1,408 @@
+---
+title: 'Notes API'
+description: 'Complete API reference for managing notes in GestorPro projects'
+icon: 'note-sticky'
+---
+
+## Overview
+
+The Notes API allows you to manage notes associated with projects in GestorPro. Notes can be used to store important information, observations, and documentation for each project.
+
+## Note Interface
+
+The `Note` type represents a note in the system:
+
+```typescript
+interface Note {
+  id: string;              // Unique identifier
+  projectId: string;       // Associated project ID
+  title: string;           // Note title
+  content: string;         // Note content
+  createdAt: string;       // ISO timestamp
+  isPinned?: boolean;      // Optional pinned status
+}
+```
+
+---
+
+## Methods
+
+<Accordion title="getNotesByProjectId" icon="list">
+
+### Get Notes by Project ID
+
+Retrieves all notes associated with a specific project.
+
+```typescript
+const getNotesByProjectId = async (projectId: string): Promise<Note[]>
+```
+
+<ParamField path="projectId" type="string" required>
+  The unique identifier of the project
+</ParamField>
+
+<ResponseField name="notes" type="Note[]">
+  Array of note objects for the specified project
+  
+  <Expandable title="Note properties">
+    <ResponseField name="id" type="string">
+      Unique identifier for the note
+    </ResponseField>
+    
+    <ResponseField name="projectId" type="string">
+      The project this note belongs to
+    </ResponseField>
+    
+    <ResponseField name="title" type="string">
+      The title of the note
+    </ResponseField>
+    
+    <ResponseField name="content" type="string">
+      The full content of the note
+    </ResponseField>
+    
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp of when the note was created
+    </ResponseField>
+    
+    <ResponseField name="isPinned" type="boolean" optional>
+      Whether the note is pinned to the top
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+#### Example
+
+```typescript
+import { getNotesByProjectId } from './services/api';
+
+const projectNotes = await getNotesByProjectId('proj_123');
+console.log(projectNotes);
+// [
+//   {
+//     id: "note_1",
+//     projectId: "proj_123",
+//     title: "Initial Planning",
+//     content: "Project kickoff notes...",
+//     createdAt: "2024-03-10T10:30:00Z",
+//     isPinned: true
+//   },
+//   ...
+// ]
+```
+
+</Accordion>
+
+<Accordion title="addNote" icon="plus">
+
+### Add Note
+
+Creates a new note for a project. The `id` and `createdAt` fields are automatically generated.
+
+```typescript
+const addNote = async (noteData: Omit<Note, 'id' | 'createdAt'>): Promise<Note>
+```
+
+<ParamField path="noteData" type="object" required>
+  The note data to create (excluding auto-generated fields)
+  
+  <Expandable title="noteData properties">
+    <ParamField path="projectId" type="string" required>
+      The ID of the project this note belongs to
+    </ParamField>
+    
+    <ParamField path="title" type="string" required>
+      The title of the note
+    </ParamField>
+    
+    <ParamField path="content" type="string" required>
+      The content of the note
+    </ParamField>
+    
+    <ParamField path="isPinned" type="boolean" optional>
+      Whether to pin the note (defaults to false)
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="note" type="Note">
+  The created note object with generated `id` and `createdAt` fields
+</ResponseField>
+
+#### Example
+
+```typescript
+import { addNote } from './services/api';
+
+const newNote = await addNote({
+  projectId: 'proj_123',
+  title: 'Meeting Notes',
+  content: 'Discussed project timeline and deliverables',
+  isPinned: false
+});
+
+console.log(newNote);
+// {
+//   id: "note_456",
+//   projectId: "proj_123",
+//   title: "Meeting Notes",
+//   content: "Discussed project timeline and deliverables",
+//   createdAt: "2024-03-10T14:20:00Z",
+//   isPinned: false
+// }
+```
+
+</Accordion>
+
+<Accordion title="updateNote" icon="pen-to-square">
+
+### Update Note
+
+Updates an existing note with new data.
+
+```typescript
+const updateNote = async (noteData: Note): Promise<Note>
+```
+
+<ParamField path="noteData" type="Note" required>
+  The complete note object with updated fields
+  
+  <Expandable title="noteData properties">
+    <ParamField path="id" type="string" required>
+      The ID of the note to update
+    </ParamField>
+    
+    <ParamField path="projectId" type="string" required>
+      The project ID (cannot be changed)
+    </ParamField>
+    
+    <ParamField path="title" type="string" required>
+      Updated title
+    </ParamField>
+    
+    <ParamField path="content" type="string" required>
+      Updated content
+    </ParamField>
+    
+    <ParamField path="createdAt" type="string" required>
+      Original creation timestamp (should not be modified)
+    </ParamField>
+    
+    <ParamField path="isPinned" type="boolean" optional>
+      Updated pinned status
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ResponseField name="note" type="Note">
+  The updated note object
+</ResponseField>
+
+#### Example
+
+```typescript
+import { updateNote } from './services/api';
+
+const updatedNote = await updateNote({
+  id: 'note_456',
+  projectId: 'proj_123',
+  title: 'Meeting Notes - Updated',
+  content: 'Discussed project timeline, deliverables, and budget adjustments',
+  createdAt: '2024-03-10T14:20:00Z',
+  isPinned: true
+});
+
+console.log(updatedNote);
+// {
+//   id: "note_456",
+//   projectId: "proj_123",
+//   title: "Meeting Notes - Updated",
+//   content: "Discussed project timeline, deliverables, and budget adjustments",
+//   createdAt: "2024-03-10T14:20:00Z",
+//   isPinned: true
+// }
+```
+
+</Accordion>
+
+<Accordion title="deleteNote" icon="trash">
+
+### Delete Note
+
+Deletes a note by its ID.
+
+```typescript
+const deleteNote = async (noteId: string): Promise<{ success: boolean }>
+```
+
+<ParamField path="noteId" type="string" required>
+  The unique identifier of the note to delete
+</ParamField>
+
+<ResponseField name="response" type="object">
+  Deletion confirmation object
+  
+  <Expandable title="response properties">
+    <ResponseField name="success" type="boolean">
+      `true` if the note was successfully deleted, `false` otherwise
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+#### Example
+
+```typescript
+import { deleteNote } from './services/api';
+
+const result = await deleteNote('note_456');
+console.log(result);
+// { success: true }
+
+if (result.success) {
+  console.log('Note deleted successfully');
+}
+```
+
+</Accordion>
+
+---
+
+## Complete Usage Example
+
+<CodeGroup>
+
+```typescript React Component
+import { useState, useEffect } from 'react';
+import { 
+  getNotesByProjectId, 
+  addNote, 
+  updateNote, 
+  deleteNote 
+} from './services/api';
+import type { Note } from './types';
+
+function ProjectNotes({ projectId }: { projectId: string }) {
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load notes
+  useEffect(() => {
+    const loadNotes = async () => {
+      try {
+        const data = await getNotesByProjectId(projectId);
+        setNotes(data);
+      } catch (error) {
+        console.error('Failed to load notes:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadNotes();
+  }, [projectId]);
+
+  // Create note
+  const handleAddNote = async (title: string, content: string) => {
+    const newNote = await addNote({
+      projectId,
+      title,
+      content,
+      isPinned: false
+    });
+    setNotes([...notes, newNote]);
+  };
+
+  // Update note
+  const handleUpdateNote = async (note: Note) => {
+    const updated = await updateNote(note);
+    setNotes(notes.map(n => n.id === updated.id ? updated : n));
+  };
+
+  // Delete note
+  const handleDeleteNote = async (noteId: string) => {
+    const result = await deleteNote(noteId);
+    if (result.success) {
+      setNotes(notes.filter(n => n.id !== noteId));
+    }
+  };
+
+  // Toggle pin
+  const handleTogglePin = async (note: Note) => {
+    await handleUpdateNote({
+      ...note,
+      isPinned: !note.isPinned
+    });
+  };
+
+  if (loading) return <div>Loading notes...</div>;
+
+  return (
+    <div>
+      {notes.map(note => (
+        <div key={note.id}>
+          <h3>{note.title} {note.isPinned && '📌'}</h3>
+          <p>{note.content}</p>
+          <button onClick={() => handleTogglePin(note)}>Toggle Pin</button>
+          <button onClick={() => handleDeleteNote(note.id)}>Delete</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+```typescript Vanilla JavaScript
+import { 
+  getNotesByProjectId, 
+  addNote, 
+  updateNote, 
+  deleteNote 
+} from './services/api';
+
+// Get all notes for a project
+const notes = await getNotesByProjectId('proj_123');
+
+// Create a new note
+const newNote = await addNote({
+  projectId: 'proj_123',
+  title: 'Important Note',
+  content: 'This is a critical observation',
+  isPinned: true
+});
+
+// Update the note
+const updatedNote = await updateNote({
+  ...newNote,
+  content: 'This is an updated critical observation'
+});
+
+// Delete the note
+const result = await deleteNote(newNote.id);
+if (result.success) {
+  console.log('Note deleted successfully');
+}
+```
+
+</CodeGroup>
+
+---
+
+## Error Handling
+
+All Notes API methods may throw errors. Always wrap calls in try-catch blocks:
+
+```typescript
+try {
+  const notes = await getNotesByProjectId(projectId);
+} catch (error) {
+  if (error instanceof Error) {
+    console.error('Failed to fetch notes:', error.message);
+  }
+}
+```
+
+### Common Errors
+
+- **Authentication Error**: Session not found or invalid
+- **Connection Error**: Failed to reach the backend script
+- **Validation Error**: Invalid note data provided
+- **Not Found**: Note or project ID does not exist

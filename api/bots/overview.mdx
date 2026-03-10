@@ -1,0 +1,139 @@
+---
+title: 'Bot API Overview'
+description: 'Complete guide to managing WhatsApp bots with BuilderBot integration'
+---
+
+## Introduction
+
+The Bot API enables you to manage WhatsApp bots powered by [BuilderBot](https://builderbot.vercel.app), an intelligent conversational AI framework. Through this API, you can create, configure, and control bot instances that handle automated conversations with your clients.
+
+## BuilderBot Integration
+
+GestorPro integrates with BuilderBot to provide enterprise-grade WhatsApp automation:
+
+<CardGroup cols={2}>
+  <Card title="AI-Powered Conversations" icon="robot">
+    Leverage OpenAI assistants with custom instructions for intelligent, context-aware responses
+  </Card>
+  <Card title="Flow-Based Logic" icon="diagram-project">
+    Create complex conversation flows with keywords, rules, and branching logic
+  </Card>
+  <Card title="QR Code Connection" icon="qrcode">
+    Simple WhatsApp connection using QR code authentication
+  </Card>
+  <Card title="Real-Time Status" icon="signal">
+    Monitor bot connection status, uptime, and online duration
+  </Card>
+</CardGroup>
+
+## Bot Entity
+
+The `Bot` interface represents a WhatsApp bot instance:
+
+```typescript
+interface Bot {
+  id: string;                      // GestorPro internal ID
+  name: string;                    // Bot display name
+  description: string;             // Bot purpose/description
+  systemInstruction: string;       // AI system prompt
+  createdAt: string;              // ISO 8601 timestamp
+  id_builderBot: string;          // BuilderBot instance ID
+  status: string;                 // "online" | "offline" | "connecting"
+  updatedAt: string;              // Last update timestamp
+  onlineSince?: string;           // When bot went online
+  lastOnlineDuration?: string;    // Previous session duration
+  builderBotApiKey?: string;      // BuilderBot API key
+}
+```
+
+## Core Workflow
+
+<Steps>
+  <Step title="Create Bot">
+    Use `addBot()` to register a new bot with name, description, and system instructions
+  </Step>
+  <Step title="Connect to WhatsApp">
+    Call `getBotQrCode()` to generate a QR code, then scan with WhatsApp
+  </Step>
+  <Step title="Configure Flows">
+    Retrieve conversation flows with `getBotFlows()` and configure responses
+  </Step>
+  <Step title="Manage Status">
+    Use `connectBot()` and `disconnectBot()` to control bot availability
+  </Step>
+  <Step title="Monitor & Update">
+    Track bot status and update configuration with `updateBot()`
+  </Step>
+</Steps>
+
+## Available Methods
+
+<CardGroup cols={2}>
+  <Card title="getBots" icon="list" href="/api/bots/get-bots">
+    Retrieve all registered bots
+  </Card>
+  <Card title="addBot" icon="plus" href="/api/bots/add-bot">
+    Create a new bot instance
+  </Card>
+  <Card title="updateBot" icon="pen" href="/api/bots/update-bot">
+    Update bot configuration
+  </Card>
+  <Card title="connectBot" icon="plug" href="/api/bots/connect-bot">
+    Connect bot to WhatsApp
+  </Card>
+  <Card title="disconnectBot" icon="plug-circle-xmark" href="/api/bots/disconnect-bot">
+    Disconnect bot from WhatsApp
+  </Card>
+  <Card title="getBotQrCode" icon="qrcode" href="/api/bots/get-qr-code">
+    Get QR code for WhatsApp connection
+  </Card>
+  <Card title="getBotFlows" icon="sitemap" href="/api/bots/get-flows">
+    Retrieve bot conversation flows
+  </Card>
+</CardGroup>
+
+## Authentication & Session
+
+All Bot API methods require an active user session with a valid `id_sheet` stored in `localStorage`:
+
+```typescript
+// Session is automatically managed by GestorPro
+const session = JSON.parse(localStorage.getItem('user_session'));
+// All API calls include session.id_sheet automatically
+```
+
+<Warning>
+Attempting to call Bot API methods without a valid session will throw an authentication error and trigger a page reload to the login screen.
+</Warning>
+
+## Error Handling
+
+All Bot API methods may throw errors. Implement proper error handling:
+
+```typescript
+try {
+  const bots = await getBots();
+  console.log('Bots loaded:', bots);
+} catch (error) {
+  console.error('Failed to load bots:', error.message);
+  // Handle error appropriately
+}
+```
+
+Common error scenarios:
+
+- **No session**: User not authenticated
+- **Network failure**: Cannot reach backend
+- **Backend error**: Google Apps Script execution error
+- **Invalid data**: Malformed payload or response
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Get Started" icon="play" href="/api/bots/get-bots">
+    Retrieve your first bot list
+  </Card>
+  <Card title="Create Bot" icon="robot" href="/api/bots/add-bot">
+    Add a new WhatsApp bot
+  </Card>
+</CardGroup>

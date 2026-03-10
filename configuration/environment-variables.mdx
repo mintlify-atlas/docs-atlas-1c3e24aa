@@ -1,0 +1,407 @@
+---
+title: 'Environment Variables'
+description: 'Complete guide to configuring environment variables for GestorPro'
+---
+
+## Overview
+
+GestorPro uses environment variables to securely configure the connection between your frontend application and Google Apps Script backend. These variables are **required** for the application to function.
+
+<Note>
+Environment variables keep your deployment URLs out of your source code, making it safe to commit your code to GitHub and easy to deploy to different environments.
+</Note>
+
+## Required Variables
+
+### VITE_AUTH_SCRIPT_URL
+
+The deployment URL for your Google Apps Script authentication service.
+
+<CodeGroup>
+```bash .env
+VITE_AUTH_SCRIPT_URL=https://script.google.com/macros/s/AKfycbxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/exec
+```
+
+```javascript config.ts
+const AUTH_SCRIPT_URL = import.meta.env.VITE_AUTH_SCRIPT_URL;
+
+if (!AUTH_SCRIPT_URL) {
+  throw new Error(
+    "ERROR: VITE_AUTH_SCRIPT_URL is not defined. Check your .env file or deployment platform configuration."
+  );
+}
+```
+</CodeGroup>
+
+**Purpose**: 
+- Handles user registration
+- Sends verification tokens (6-digit codes)
+- Validates tokens and authenticates users
+- Returns the user's Google Sheet ID (`id_sheet`)
+
+**Used by**:
+- `components/Auth.tsx:40` - All authentication requests
+- Login, registration, and verification flows
+
+<Warning>
+The application will **fail immediately** on startup if this variable is not set, showing a clear error message in the console.
+</Warning>
+
+### VITE_DATA_SCRIPT_URL
+
+The deployment URL for your Google Apps Script data service.
+
+<CodeGroup>
+```bash .env
+VITE_DATA_SCRIPT_URL=https://script.google.com/macros/s/AKfycbyYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY/exec
+```
+
+```javascript config.ts
+const DATA_SCRIPT_URL = import.meta.env.VITE_DATA_SCRIPT_URL;
+
+if (!DATA_SCRIPT_URL) {
+  throw new Error(
+    "ERROR: VITE_DATA_SCRIPT_URL is not defined. Check your .env file or deployment platform configuration."
+  );
+}
+```
+</CodeGroup>
+
+**Purpose**:
+- All CRUD operations for clients, projects, notes, links, prompts, bots, and flows
+- Communicates with the user's isolated Google Sheet
+- Manages all business data
+
+**Used by**:
+- `services/api.ts:35` - All data operations
+- Every API call after authentication
+
+<Warning>
+The application will **fail immediately** on startup if this variable is not set, showing a clear error message in the console.
+</Warning>
+
+## Getting Your URLs
+
+You'll get these URLs when deploying your Google Apps Script projects:
+
+<Steps>
+  <Step title="Deploy your Auth script">
+    1. Open your authentication Apps Script project
+    2. Click **Deploy** → **New deployment**
+    3. Select type: **Web app**
+    4. Set "Who has access" to **Anyone**
+    5. Click **Deploy**
+    6. **Copy the Web App URL** - this is your `VITE_AUTH_SCRIPT_URL`
+  </Step>
+
+  <Step title="Deploy your Data script">
+    1. Open your data Apps Script project
+    2. Click **Deploy** → **New deployment**
+    3. Select type: **Web app**
+    4. Set "Who has access" to **Anyone**
+    5. Click **Deploy**
+    6. **Copy the Web App URL** - this is your `VITE_DATA_SCRIPT_URL`
+  </Step>
+
+  <Step title="Configure your environment">
+    Add both URLs to your `.env` file or hosting platform configuration.
+  </Step>
+</Steps>
+
+<Tip>
+See [Google Apps Script Backend](/configuration/google-apps-script) for complete deployment instructions.
+</Tip>
+
+## Configuration by Environment
+
+### Local Development
+
+Create a `.env` file in the root of your project:
+
+<CodeGroup>
+```bash .env
+# GestorPro Configuration
+# Do NOT commit this file to version control
+
+VITE_AUTH_SCRIPT_URL=https://script.google.com/macros/s/YOUR_AUTH_SCRIPT_ID/exec
+VITE_DATA_SCRIPT_URL=https://script.google.com/macros/s/YOUR_DATA_SCRIPT_ID/exec
+```
+
+```bash .gitignore
+# Environment variables
+.env
+.env.local
+.env.*.local
+```
+</CodeGroup>
+
+<Steps>
+  <Step title="Create .env file">
+    Create a file named `.env` in your project root (same directory as `package.json`).
+  </Step>
+
+  <Step title="Add your URLs">
+    Copy your Google Apps Script deployment URLs into the `.env` file.
+  </Step>
+
+  <Step title="Start the dev server">
+    ```bash
+    npm run dev
+    ```
+    Vite will automatically load the environment variables.
+  </Step>
+</Steps>
+
+<Note>
+Vite requires environment variables to be prefixed with `VITE_` to be accessible in the browser. This is a security feature to prevent accidentally exposing server-side secrets.
+</Note>
+
+### Netlify
+
+Configure environment variables in the Netlify dashboard:
+
+<Steps>
+  <Step title="Go to Site settings">
+    Navigate to your site → **Site settings** → **Environment variables**
+  </Step>
+
+  <Step title="Add variables">
+    Click **Add a variable** and add:
+    
+    | Key | Value | Scopes |
+    |-----|-------|--------|
+    | `VITE_AUTH_SCRIPT_URL` | Your auth script URL | All |
+    | `VITE_DATA_SCRIPT_URL` | Your data script URL | All |
+  </Step>
+
+  <Step title="Redeploy">
+    Trigger a new deployment or use **Deploys** → **Trigger deploy** → **Deploy site**
+  </Step>
+</Steps>
+
+<CodeGroup>
+```bash Netlify CLI
+# Set environment variables via CLI
+netlify env:set VITE_AUTH_SCRIPT_URL "https://script.google.com/macros/s/YOUR_AUTH_ID/exec"
+netlify env:set VITE_DATA_SCRIPT_URL "https://script.google.com/macros/s/YOUR_DATA_ID/exec"
+
+# Deploy
+netlify deploy --prod
+```
+
+```toml netlify.toml
+# netlify.toml
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Environment variables can also be set here for team sharing
+# But use the dashboard for sensitive values
+```
+</CodeGroup>
+
+### Vercel
+
+Configure environment variables in the Vercel dashboard:
+
+<Steps>
+  <Step title="Go to Project settings">
+    Navigate to your project → **Settings** → **Environment Variables**
+  </Step>
+
+  <Step title="Add variables">
+    Add the following variables:
+    
+    | Name | Value | Environment |
+    |------|-------|-------------|
+    | `VITE_AUTH_SCRIPT_URL` | Your auth script URL | Production, Preview, Development |
+    | `VITE_DATA_SCRIPT_URL` | Your data script URL | Production, Preview, Development |
+  </Step>
+
+  <Step title="Redeploy">
+    Go to **Deployments** and redeploy your latest commit
+  </Step>
+</Steps>
+
+<CodeGroup>
+```bash Vercel CLI
+# Set environment variables via CLI
+vercel env add VITE_AUTH_SCRIPT_URL production
+# Paste your URL when prompted
+
+vercel env add VITE_DATA_SCRIPT_URL production
+# Paste your URL when prompted
+
+# Deploy
+vercel --prod
+```
+
+```json vercel.json
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite"
+}
+```
+</CodeGroup>
+
+### Other Platforms
+
+For other hosting platforms (Render, Railway, Cloudflare Pages, etc.):
+
+1. Find the **Environment Variables** or **Build Configuration** section
+2. Add `VITE_AUTH_SCRIPT_URL` with your auth script URL
+3. Add `VITE_DATA_SCRIPT_URL` with your data script URL
+4. Ensure variables are available during build time
+5. Redeploy your application
+
+## How It Works
+
+### At Build Time
+
+Vite embeds environment variables into your built JavaScript files:
+
+```javascript
+// Before build (source code)
+const url = import.meta.env.VITE_AUTH_SCRIPT_URL;
+
+// After build (dist/assets/index-xyz.js)
+const url = "https://script.google.com/macros/s/AKfycbxXXX/exec";
+```
+
+<Warning>
+This means:
+1. Variables must be set **before** running `npm run build`
+2. Changing variables requires a **rebuild**
+3. Variables are **visible** in the browser (not secret)
+</Warning>
+
+### Validation
+
+The application validates environment variables on startup:
+
+```javascript
+// config.ts:24-30
+if (!AUTH_SCRIPT_URL) {
+  throw new Error(
+    "ERROR: VITE_AUTH_SCRIPT_URL is not defined. " +
+    "Check your .env file or deployment platform configuration."
+  );
+}
+
+if (!DATA_SCRIPT_URL) {
+  throw new Error(
+    "ERROR: VITE_DATA_SCRIPT_URL is not defined. " +
+    "Check your .env file or deployment platform configuration."
+  );
+}
+```
+
+<Tip>
+If you see these errors, your environment variables are not properly configured. Check your `.env` file or hosting platform settings.
+</Tip>
+
+## Troubleshooting
+
+### Variables Not Loading Locally
+
+<Steps>
+  <Step title="Check file name">
+    The file must be named exactly `.env` (with the leading dot)
+  </Step>
+
+  <Step title="Check file location">
+    The `.env` file must be in your project root (same folder as `package.json`)
+  </Step>
+
+  <Step title="Check variable prefix">
+    Variables must start with `VITE_` to be accessible in the browser
+  </Step>
+
+  <Step title="Restart dev server">
+    Stop your dev server (Ctrl+C) and run `npm run dev` again
+  </Step>
+</Steps>
+
+### Variables Not Loading in Production
+
+<Steps>
+  <Step title="Verify configuration">
+    Log in to your hosting platform and confirm the variables are set
+  </Step>
+
+  <Step title="Check build logs">
+    Look for any errors during the build process related to environment variables
+  </Step>
+
+  <Step title="Trigger new deployment">
+    After adding/changing variables, you must rebuild and redeploy
+  </Step>
+
+  <Step title="Check browser console">
+    Open DevTools (F12) and look for the error message from `config.ts`
+  </Step>
+</Steps>
+
+### "Failed to fetch" Error
+
+If you get connection errors after setting variables:
+
+1. **Verify the URLs** are correct (copy directly from Apps Script deployment)
+2. **Test in browser** - paste each URL in a new tab
+3. **Expected response**: "The script completed but did not return anything"
+4. **If you see errors**: Your Apps Script deployment is incorrect
+
+<Warning>
+Common mistake: Using the Apps Script **editor URL** instead of the **deployment URL**. The deployment URL ends with `/exec`.
+</Warning>
+
+## Security Best Practices
+
+### ✅ Do
+
+- Use `.env` files for local development
+- Add `.env` to `.gitignore` to prevent committing secrets
+- Use hosting platform UI to set production variables
+- Document required variables in your README
+- Validate environment variables on app startup
+
+### ❌ Don't
+
+- Commit `.env` files to version control
+- Hardcode URLs directly in source code
+- Share `.env` files via insecure channels
+- Use the same URLs for development and production (optional)
+- Store sensitive API keys in `VITE_` variables (they're public)
+
+<Tip>
+`VITE_` variables are **not secret** - they're embedded in your JavaScript and visible to anyone. Only use them for public configuration like API endpoints, not for API keys or passwords.
+</Tip>
+
+## Example Configuration
+
+<CodeGroup>
+```bash .env.example
+# GestorPro Environment Variables
+# Copy this file to .env and fill in your values
+
+# Authentication Script URL
+# Get this from: Google Apps Script > Deploy > New deployment > Web app
+VITE_AUTH_SCRIPT_URL=
+
+# Data Script URL  
+# Get this from: Google Apps Script > Deploy > New deployment > Web app
+VITE_DATA_SCRIPT_URL=
+```
+
+```bash .env (filled)
+VITE_AUTH_SCRIPT_URL=https://script.google.com/macros/s/AKfycbxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/exec
+VITE_DATA_SCRIPT_URL=https://script.google.com/macros/s/AKfycbyYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY/exec
+```
+</CodeGroup>
+
+## Next Steps
+
+- [Set up Google Apps Script](/configuration/google-apps-script) to get your deployment URLs
+- [Deploy to production](/configuration/deployment) with your configured variables
+- Learn about [authentication flow](/features/authentication) and how these URLs are used

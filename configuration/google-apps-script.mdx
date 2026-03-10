@@ -1,0 +1,335 @@
+---
+title: 'Google Apps Script Backend'
+description: 'Setting up the Google Apps Script backend for GestorPro with deployment instructions'
+---
+
+## Overview
+
+GestorPro uses **Google Apps Script** as its serverless backend. The application requires two separate scripts:
+
+1. **Authentication Script** (`script_auth.js`) - Handles user registration, login, and token verification
+2. **Data Script** (`script.js`) - Manages all CRUD operations for clients, projects, notes, links, prompts, bots, and flows
+
+<Note>
+Each user gets their own isolated Google Sheets database, creating a true multi-tenant architecture where data is completely separated between users.
+</Note>
+
+## Backend Architecture
+
+The frontend communicates with Google Apps Script via HTTP POST requests:
+
+```
+Frontend (React/Vite)
+       ↓
+    HTTPS POST
+       ↓
+Google Apps Script (Web App)
+       ↓
+Google Sheets (Database)
+```
+
+### How It Works
+
+- **Frontend**: Sends JSON payloads with `action` and `payload` properties
+- **Apps Script**: Processes the action and returns JSON responses with `success` and `data`/`error`
+- **Google Sheets**: Stores all data in spreadsheet format (one per user)
+
+<Tip>
+The application avoids CORS preflight requests by omitting the `Content-Type` header and sending plain text, which is more compatible with Google Apps Script.
+</Tip>
+
+## Creating the Authentication Script
+
+<Steps>
+  <Step title="Create a new Google Apps Script project">
+    1. Go to [script.google.com](https://script.google.com)
+    2. Click **New Project**
+    3. Name it `GestorPro Auth` or similar
+  </Step>
+
+  <Step title="Add the authentication code">
+    Create a file named `script_auth.js` with the following structure:
+
+    ```javascript
+    function doPost(e) {
+      try {
+        const requestData = JSON.parse(e.postData.contents);
+        const { action, payload } = requestData;
+        
+        let result;
+        switch (action) {
+          case 'findUser':
+            result = findUser(payload);
+            break;
+          case 'verifyToken':
+            result = verifyToken(payload);
+            break;
+          case 'registerUser':
+            result = registerUser(payload);
+            break;
+          default:
+            return ContentService.createTextOutput(
+              JSON.stringify({ success: false, error: 'Invalid action' })
+            ).setMimeType(ContentService.MimeType.JSON);
+        }
+        
+        return ContentService.createTextOutput(
+          JSON.stringify({ success: true, data: result })
+        ).setMimeType(ContentService.MimeType.JSON);
+      } catch (error) {
+        return ContentService.createTextOutput(
+          JSON.stringify({ success: false, error: error.message })
+        ).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+    
+    function findUser(identifier) {
+      // Check if user exists by WhatsApp or Email
+      // Send verification token via email/SMS
+      // Return { userExists: true/false, message: '...' }
+    }
+    
+    function verifyToken(data) {
+      // Verify the 6-digit token sent to user
+      // Return { authenticated: true, id_sheet: 'spreadsheet_id' }
+    }
+    
+    function registerUser(data) {
+      // Create new user and their isolated Google Sheet
+      // Send verification token
+      // Return { registrationComplete: true, message: '...' }
+    }
+    ```
+
+    <Note>
+    You'll need to implement the actual logic for user management, token generation (6-digit codes that expire in 10 minutes), and Google Sheets creation.
+    </Note>
+  </Step>
+
+  <Step title="Deploy as Web App">
+    1. Click **Deploy** → **New deployment**
+    2. Select type: **Web app**
+    3. Configure settings:
+       - **Description**: "GestorPro Authentication Service"
+       - **Execute as**: **Me** (your Google account)
+       - **Who has access**: **Anyone** ⚠️ This is critical!
+    4. Click **Deploy**
+    5. **Copy the Web App URL** - you'll need this for `VITE_AUTH_SCRIPT_URL`
+  </Step>
+</Steps>
+
+<Warning>
+The "Who has access" setting **MUST** be set to "Anyone" for the frontend to communicate with the script. Without this, you'll get CORS and authentication errors.
+</Warning>
+
+## Creating the Data Script
+
+<Steps>
+  <Step title="Create a second Google Apps Script project">
+    1. Go to [script.google.com](https://script.google.com)
+    2. Click **New Project**
+    3. Name it `GestorPro Data` or similar
+  </Step>
+
+  <Step title="Add the data management code">
+    Create a file named `script.js` with the following structure:
+
+    ```javascript
+    function doPost(e) {
+      try {
+        const requestData = JSON.parse(e.postData.contents);
+        const { action, payload } = requestData;
+        const { id_sheet, data } = payload;
+        
+        // Open the user's specific Google Sheet
+        const sheet = SpreadsheetApp.openById(id_sheet);
+        
+        let result;
+        switch (action) {
+          // Clients
+          case 'getClients':
+            result = getClients(sheet);
+            break;
+          case 'getClientByPhone':
+            result = getClientByPhone(sheet, data);
+            break;
+          case 'addClient':
+            result = addClient(sheet, data);
+            break;
+          case 'updateClient':
+            result = updateClient(sheet, data);
+            break;
+          case 'deleteClient':
+            result = deleteClient(sheet, data);
+            break;
+            
+          // Projects
+          case 'getProjects':
+            result = getProjects(sheet);
+            break;
+          case 'addProject':
+            result = addProject(sheet, data);
+            break;
+          case 'updateProject':
+            result = updateProject(sheet, data);
+            break;
+          case 'deleteProject':
+            result = deleteProject(sheet, data);
+            break;
+            
+          // Notes, Links, Prompts, Bots, Flows...
+          // (Similar structure for all other entities)
+          
+          default:
+            throw new Error('Invalid action: ' + action);
+        }
+        
+        return ContentService.createTextOutput(
+          JSON.stringify({ success: true, data: result })
+        ).setMimeType(ContentService.MimeType.JSON);
+      } catch (error) {
+        return ContentService.createTextOutput(
+          JSON.stringify({ success: false, error: error.message })
+        ).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+    
+    // Implement all CRUD functions for:
+    // - Clients (getClients, addClient, updateClient, deleteClient)
+    // - Projects (getProjects, addProject, updateProject, deleteProject)
+    // - Notes (getNotesByProjectId, addNote, updateNote, deleteNote)
+    // - Links (getLinksByProjectId, addLink, updateLink, deleteLink)
+    // - Prompts (getPromptsByProjectId, addPrompt, updatePrompt, deletePrompt)
+    // - Bots (getBots, addBot, updateBot, deleteBot, connectBot, disconnectBot)
+    // - Flows (getBotFlows, getBotQrCode)
+    ```
+
+    <Tip>
+    Each function receives the `sheet` object (the user's Google Spreadsheet) and performs operations on specific tabs like "Clients", "Projects", "Notes", etc.
+    </Tip>
+  </Step>
+
+  <Step title="Deploy as Web App">
+    1. Click **Deploy** → **New deployment**
+    2. Select type: **Web app**
+    3. Configure settings:
+       - **Description**: "GestorPro Data Service"
+       - **Execute as**: **Me** (your Google account)
+       - **Who has access**: **Anyone** ⚠️ This is critical!
+    4. Click **Deploy**
+    5. **Copy the Web App URL** - you'll need this for `VITE_DATA_SCRIPT_URL`
+  </Step>
+</Steps>
+
+## Required Permissions
+
+When you first deploy, Google will ask for permissions:
+
+<Steps>
+  <Step title="Click 'Review Permissions'">
+    You may see a warning that the app isn't verified. This is normal for personal projects.
+  </Step>
+
+  <Step title="Click 'Advanced' → 'Go to [Project Name] (unsafe)'">
+    This allows your script to run with your account's permissions.
+  </Step>
+
+  <Step title="Grant permissions">
+    Allow the script to:
+    - View and manage your spreadsheets
+    - Connect to external services (for sending emails/SMS)
+  </Step>
+</Steps>
+
+## Testing Your Deployment
+
+<CodeGroup>
+```bash Test Authentication Script
+# Copy your AUTH_SCRIPT_URL and paste it in a browser
+# Expected response: "The script completed but did not return anything"
+# This means it's working correctly!
+```
+
+```bash Test Data Script
+# Copy your DATA_SCRIPT_URL and paste it in a browser
+# Expected response: "The script completed but did not return anything"
+# This means it's working correctly!
+```
+</CodeGroup>
+
+<Warning>
+If you see "Page not found" or "Permission denied", your deployment settings are incorrect. Go back and ensure "Who has access" is set to "Anyone".
+</Warning>
+
+## Updating Your Scripts
+
+<Note>
+**Important**: Every time you modify your Google Apps Script code, you MUST create a new deployment.
+</Note>
+
+<Steps>
+  <Step title="Make your code changes">
+    Edit your script in the Apps Script editor.
+  </Step>
+
+  <Step title="Create new deployment">
+    1. Click **Deploy** → **New deployment**
+    2. Use the same settings as before
+    3. Get the **new URL**
+  </Step>
+
+  <Step title="Update environment variables">
+    Update `VITE_AUTH_SCRIPT_URL` or `VITE_DATA_SCRIPT_URL` in your `.env` file or hosting platform with the new URL.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### "Failed to fetch" Error
+
+This means the frontend can't communicate with your script:
+
+1. **Test the URL** in your browser (paste it in a new tab)
+2. **Expected**: "The script completed but did not return anything"
+3. **If you see an error**: Your deployment is incorrect
+
+**Solution**: 
+- Redeploy with "Who has access" set to **Anyone**
+- Copy the NEW URL
+- Update your environment variables
+
+### "Empty Response" Error
+
+The script is running but not returning data:
+
+1. Check your `doPost` function returns `ContentService.createTextOutput()`
+2. Ensure you're stringifying JSON: `JSON.stringify({ success: true, data: result })`
+3. Check Apps Script logs: **View** → **Logs** in the editor
+
+### "Invalid JSON" Error
+
+The script is returning malformed JSON:
+
+1. Always wrap responses in `{ success: true, data: ... }` or `{ success: false, error: ... }`
+2. Use `ContentService.createTextOutput().setMimeType(ContentService.MimeType.JSON)`
+3. Check for syntax errors in your response construction
+
+## Security Considerations
+
+<Warning>
+While the scripts are publicly accessible ("Anyone"), they are secure because:
+
+1. **Authentication**: Users must verify identity with a token sent to their email/WhatsApp
+2. **Session-based**: All data requests include the user's `id_sheet` from their authenticated session
+3. **Isolation**: Each user can only access their own Google Sheet (determined by `id_sheet`)
+4. **No credentials in frontend**: The frontend never stores passwords or API keys
+</Warning>
+
+<Tip>
+Consider implementing rate limiting and additional validation in your Apps Script code to prevent abuse.
+</Tip>
+
+## Next Steps
+
+- [Configure Environment Variables](/configuration/environment-variables) to connect your frontend to these scripts
+- [Deploy to Production](/configuration/deployment) to make your app available online

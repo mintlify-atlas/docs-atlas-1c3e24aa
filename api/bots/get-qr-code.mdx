@@ -1,0 +1,454 @@
+---
+title: 'getBotQrCode'
+description: 'Generate a QR code for WhatsApp bot authentication'
+---
+
+## Method Signature
+
+```typescript
+getBotQrCode(builderBotId: string): Promise<{ qr: string }>
+```
+
+Retrieves a QR code for authenticating a bot with WhatsApp. The user scans this QR code with their WhatsApp mobile app to link the bot to their WhatsApp account.
+
+## Parameters
+
+<ParamField path="builderBotId" type="string" required>
+  The BuilderBot instance ID (not the GestorPro bot ID). This is the `id_builderBot` field from the Bot object.
+</ParamField>
+
+<Note>
+This method uses the `id_builderBot` field, not the GestorPro `id`. You can find this value in the Bot object's `id_builderBot` property.
+</Note>
+
+## Returns
+
+<ResponseField name="Promise<{ qr: string }>" type="Promise">
+  Returns a promise that resolves to an object containing the QR code
+  
+  <Expandable title="Response Object">
+    <ResponseField name="qr" type="string" required>
+      Base64-encoded QR code image or QR code data string. This can be displayed as an image or rendered using a QR code library.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Code Examples
+
+<CodeGroup>
+```typescript Basic Usage
+import { getBotQrCode } from './services/api';
+
+async function fetchQrCode(builderBotId: string) {
+  try {
+    const { qr } = await getBotQrCode(builderBotId);
+    console.log('QR code retrieved');
+    return qr;
+  } catch (error) {
+    console.error('Failed to get QR code:', error);
+    throw error;
+  }
+}
+```
+
+```typescript Display QR Code in HTML
+import { getBotQrCode } from './services/api';
+
+async function displayQrCode(builderBotId: string) {
+  const { qr } = await getBotQrCode(builderBotId);
+  
+  // If QR is base64 image
+  const imgElement = document.createElement('img');
+  imgElement.src = `data:image/png;base64,${qr}`;
+  imgElement.alt = 'WhatsApp QR Code';
+  
+  document.getElementById('qr-container')?.appendChild(imgElement);
+}
+```
+
+```typescript React Component
+import { useState, useEffect } from 'react';
+import { getBotQrCode } from './services/api';
+
+function QrCodeDisplay({ builderBotId }: { builderBotId: string }) {
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadQrCode() {
+      try {
+        const { qr } = await getBotQrCode(builderBotId);
+        setQrCode(qr);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load QR code');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadQrCode();
+  }, [builderBotId]);
+
+  if (loading) {
+    return <div className="loading">Loading QR code...</div>;
+  }
+
+  if (error) {
+    return <div className="error">Error: {error}</div>;
+  }
+
+  return (
+    <div className="qr-code-container">
+      <h3>Scan with WhatsApp</h3>
+      <img 
+        src={`data:image/png;base64,${qrCode}`}
+        alt="WhatsApp QR Code"
+        className="qr-code"
+      />
+      <p className="instructions">
+        1. Open WhatsApp on your phone
+        <br />
+        2. Tap Menu or Settings
+        <br />
+        3. Tap Linked Devices
+        <br />
+        4. Tap Link a Device
+        <br />
+        5. Scan this QR code
+      </p>
+    </div>
+  );
+}
+```
+
+```typescript With QR Library (qrcode)
+import { getBotQrCode } from './services/api';
+import QRCode from 'qrcode';
+
+async function generateQrCodeImage(builderBotId: string) {
+  // Get QR data from API
+  const { qr } = await getBotQrCode(builderBotId);
+  
+  // Generate QR code image using library
+  const qrImageUrl = await QRCode.toDataURL(qr, {
+    width: 300,
+    margin: 2,
+    color: {
+      dark: '#000000',
+      light: '#FFFFFF'
+    }
+  });
+  
+  return qrImageUrl;
+}
+```
+
+```typescript Complete Setup Flow
+import { addBot, getBotQrCode, connectBot } from './services/api';
+
+async function setupBotWithQr(
+  name: string,
+  description: string,
+  systemInstruction: string,
+  builderBotId: string
+) {
+  console.log('Step 1: Creating bot...');
+  const bot = await addBot({
+    name,
+    description,
+    systemInstruction,
+    id_builderBot: builderBotId
+  });
+  
+  console.log('Step 2: Getting QR code...');
+  const { qr } = await getBotQrCode(builderBotId);
+  
+  console.log('Step 3: Display QR code to user');
+  // Your UI code to display QR
+  displayQrCodeModal(qr);
+  
+  console.log('Step 4: Waiting for user to scan...');
+  // Wait for user confirmation
+  await new Promise(resolve => {
+    // Your UI code for "I've scanned the QR code" button
+    waitForUserConfirmation(resolve);
+  });
+  
+  console.log('Step 5: Connecting bot...');
+  const result = await connectBot(bot.id);
+  
+  if (result.success) {
+    console.log('✅ Bot setup complete!');
+    return bot;
+  } else {
+    throw new Error('Failed to connect bot after QR scan');
+  }
+}
+```
+
+```typescript Auto-Refresh QR Code
+import { getBotQrCode } from './services/api';
+
+async function autoRefreshQrCode(
+  builderBotId: string,
+  onUpdate: (qr: string) => void
+) {
+  const REFRESH_INTERVAL = 60000; // 1 minute
+  
+  async function fetchAndUpdate() {
+    try {
+      const { qr } = await getBotQrCode(builderBotId);
+      onUpdate(qr);
+      console.log('QR code refreshed');
+    } catch (error) {
+      console.error('Failed to refresh QR code:', error);
+    }
+  }
+  
+  // Initial fetch
+  await fetchAndUpdate();
+  
+  // Refresh periodically
+  const intervalId = setInterval(fetchAndUpdate, REFRESH_INTERVAL);
+  
+  // Return cleanup function
+  return () => clearInterval(intervalId);
+}
+
+// Usage
+const cleanup = await autoRefreshQrCode('bb_123', (qr) => {
+  document.getElementById('qr-img').src = `data:image/png;base64,${qr}`;
+});
+
+// Later, when component unmounts:
+// cleanup();
+```
+</CodeGroup>
+
+## Response Example
+
+```json
+{
+  "qr": "iVBORw0KGgoAAAANSUhEUgAAA..."
+}
+```
+
+The `qr` field contains either:
+- A base64-encoded PNG image of the QR code
+- Raw QR code data string that can be rendered with a QR code library
+
+## UI Integration Examples
+
+<CodeGroup>
+```tsx React Modal
+import { useState } from 'react';
+import { getBotQrCode } from './services/api';
+
+function QrCodeModal({ 
+  builderBotId, 
+  onClose, 
+  onScanned 
+}: {
+  builderBotId: string;
+  onClose: () => void;
+  onScanned: () => void;
+}) {
+  const [qrCode, setQrCode] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getBotQrCode(builderBotId)
+      .then(({ qr }) => setQrCode(qr))
+      .finally(() => setLoading(false));
+  }, [builderBotId]);
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <h2>Connect to WhatsApp</h2>
+        
+        {loading ? (
+          <div className="spinner">Loading...</div>
+        ) : (
+          <>
+            <img 
+              src={`data:image/png;base64,${qrCode}`}
+              alt="QR Code"
+              className="qr-code-large"
+            />
+            
+            <div className="instructions">
+              <h3>How to scan:</h3>
+              <ol>
+                <li>Open WhatsApp on your phone</li>
+                <li>Go to Settings → Linked Devices</li>
+                <li>Tap "Link a Device"</li>
+                <li>Scan this QR code</li>
+              </ol>
+            </div>
+            
+            <div className="actions">
+              <button onClick={onScanned} className="primary">
+                I've Scanned the QR Code
+              </button>
+              <button onClick={onClose} className="secondary">
+                Cancel
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+```
+
+```typescript Vanilla JS
+import { getBotQrCode } from './services/api';
+
+async function showQrCodeModal(builderBotId: string) {
+  // Create modal
+  const modal = document.createElement('div');
+  modal.className = 'qr-modal';
+  modal.innerHTML = `
+    <div class="qr-modal-content">
+      <h2>Scan to Connect</h2>
+      <div id="qr-loading">Loading QR code...</div>
+      <div id="qr-display" style="display:none;">
+        <img id="qr-image" alt="QR Code" />
+        <p>Scan this code with WhatsApp</p>
+        <button id="qr-done">Done</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Fetch QR code
+  try {
+    const { qr } = await getBotQrCode(builderBotId);
+    
+    document.getElementById('qr-loading')!.style.display = 'none';
+    document.getElementById('qr-display')!.style.display = 'block';
+    document.getElementById('qr-image')!.src = `data:image/png;base64,${qr}`;
+    
+    // Handle done button
+    document.getElementById('qr-done')!.addEventListener('click', () => {
+      modal.remove();
+    });
+  } catch (error) {
+    document.getElementById('qr-loading')!.textContent = 'Error loading QR code';
+  }
+}
+```
+</CodeGroup>
+
+## Error Handling
+
+<CodeGroup>
+```typescript Try-Catch Pattern
+import { getBotQrCode } from './services/api';
+
+async function safeGetQrCode(builderBotId: string) {
+  try {
+    const { qr } = await getBotQrCode(builderBotId);
+    return qr;
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message.includes('not found')) {
+        console.error('BuilderBot instance not found');
+        throw new Error('Bot configuration error. Please check BuilderBot ID.');
+      } else if (error.message.includes('Failed to fetch')) {
+        console.error('Network error');
+        throw new Error('Cannot connect to server. Check your internet connection.');
+      } else {
+        console.error('Unknown error:', error.message);
+        throw new Error('Failed to generate QR code. Please try again.');
+      }
+    }
+    throw error;
+  }
+}
+```
+
+```typescript With Retry
+import { getBotQrCode } from './services/api';
+
+async function getQrCodeWithRetry(builderBotId: string, maxAttempts = 3) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const { qr } = await getBotQrCode(builderBotId);
+      return qr;
+    } catch (error) {
+      console.error(`Attempt ${attempt} failed:`, error);
+      
+      if (attempt === maxAttempts) {
+        throw new Error(`Failed to get QR code after ${maxAttempts} attempts`);
+      }
+      
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+    }
+  }
+  
+  throw new Error('Unexpected error in retry logic');
+}
+```
+</CodeGroup>
+
+## Important Notes
+
+<Warning>
+QR codes expire after a certain period (typically 60 seconds). Implement auto-refresh functionality to generate new QR codes if the user takes too long to scan.
+</Warning>
+
+<Note>
+The `builderBotId` parameter is the BuilderBot instance ID (`id_builderBot`), not the GestorPro bot ID (`id`). Make sure to use the correct ID when calling this method.
+</Note>
+
+<Note>
+After the user scans the QR code, you still need to call `connectBot()` to activate the bot and change its status to "online".
+</Note>
+
+## WhatsApp Scanning Instructions
+
+Provide these instructions to users:
+
+<Steps>
+  <Step title="Open WhatsApp">
+    Open WhatsApp on your mobile device
+  </Step>
+  <Step title="Go to Settings">
+    Tap the three dots (⋮) menu and select "Settings"
+  </Step>
+  <Step title="Linked Devices">
+    Tap "Linked Devices" or "WhatsApp Web"
+  </Step>
+  <Step title="Link Device">
+    Tap "Link a Device" button
+  </Step>
+  <Step title="Scan QR Code">
+    Point your camera at the QR code displayed on screen
+  </Step>
+  <Step title="Complete Setup">
+    Wait for confirmation, then click "Done" in the app
+  </Step>
+</Steps>
+
+## Best Practices
+
+1. **Display clear instructions** alongside the QR code
+2. **Implement QR code refresh** - codes expire quickly
+3. **Show loading states** while fetching the QR code
+4. **Handle errors gracefully** with user-friendly messages
+5. **Confirm scan completion** before proceeding to connect
+6. **Use appropriate QR size** - minimum 300x300px for easy scanning
+7. **Test on mobile devices** to ensure scanability
+
+## See Also
+
+- [addBot](/api/bots/add-bot) - Create bot before getting QR code
+- [connectBot](/api/bots/connect-bot) - Connect bot after QR scan
+- [getBots](/api/bots/get-bots) - Check connection status
+- [Overview](/api/bots/overview) - Complete bot setup workflow

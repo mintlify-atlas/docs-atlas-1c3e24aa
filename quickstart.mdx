@@ -1,80 +1,223 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: 'Quickstart Guide'
+description: 'Get up and running with GestorPro in minutes'
 ---
 
-## Get started in three steps
+# Quickstart Guide
 
-Get your documentation site running locally and make your first customization.
+This guide will help you get started with GestorPro, from creating your account to managing your first project.
 
-### Step 1: Set up your local environment
+## What is GestorPro?
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
-
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+GestorPro is a multi-user management panel for organizing clients, projects, and AI-powered bots. Built with React and powered by Google Apps Script as a backend, it provides a seamless way to manage your business operations.
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  GestorPro uses Google Sheets as a database and Google Apps Script for authentication and data management.
 </Note>
+
+## Getting Started
+
+<Steps>
+  <Step title="Access GestorPro">
+    Navigate to your GestorPro application URL. You'll be greeted with the login screen.
+    
+    The authentication system supports both WhatsApp numbers and email addresses for login.
+  </Step>
+
+  <Step title="Create Your Account">
+    If you're a new user, enter your WhatsApp number or email address and click **Continuar**.
+    
+    <CodeGroup>
+    ```tsx Auth Flow
+    // GestorPro checks if you're an existing user
+    const handleLoginSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      const data = await callAuthScript('findUser', identifier);
+      if (data.userExists) {
+        setStage('verify');
+      } else {
+        setStage('register'); // New user registration
+      }
+    };
+    ```
+    </CodeGroup>
+    
+    Complete the registration form with your information:
+    - **Nombre** (First Name)
+    - **Apellido** (Last Name)
+    - **WhatsApp** (Phone Number)
+    - **Email**
+    - **FechaNacimiento** (Date of Birth)
+    
+    <Warning>
+      Make sure to use a valid WhatsApp number or email address - you'll receive a verification code there.
+    </Warning>
+  </Step>
+
+  <Step title="Verify Your Identity">
+    After registration, you'll receive a 6-digit verification code via your chosen contact method.
+    
+    Enter the code in the verification screen. The code expires in 10 minutes.
+    
+    ```tsx
+    // Verification handler
+    const handleVerifySubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      const data = await callAuthScript('verifyToken', { 
+        identifier, 
+        token 
+      });
+      if (data.authenticated && data.id_sheet) {
+        onLoginSuccess({ id_sheet: data.id_sheet });
+      }
+    };
+    ```
+  </Step>
+
+  <Step title="Create Your First Client">
+    Once logged in, navigate to the **Clientes** section from the sidebar.
+    
+    Click **Nuevo Cliente** and fill in the client information:
+    ```tsx
+    interface Client {
+      id: string;
+      name: string;           // Company or client name
+      contactPerson: string;  // Contact person's name
+      email: string;          // Email address
+      phone: string;          // Phone number
+    }
+    ```
+    
+    <Card title="Pro Tip" icon="lightbulb">
+      Use the **Client Search** feature to quickly find existing clients by phone number before creating duplicates.
+    </Card>
+  </Step>
+
+  <Step title="Create Your First Project">
+    Navigate to **Proyectos** and click **Nuevo Proyecto**.
+    
+    Fill in the project details:
+    
+    <CodeGroup>
+    ```tsx Project Structure
+    interface Project {
+      name: string;        // Project name
+      clientId: string;    // Select from your clients
+      startDate: string;   // Project start date
+      endDate: string;     // Project end date
+      budget: number;      // Budget in dollars
+      status: ProjectStatus; // Project status
+    }
+    ```
+    
+    ```tsx Project Status Options
+    enum ProjectStatus {
+      NotStarted = 'No Iniciado',
+      InProgress = 'En Progreso',
+      Completed = 'Completado',
+      OnHold = 'En Pausa',
+    }
+    ```
+    </CodeGroup>
+    
+    After creating the project, click on it to access the detail view where you can:
+    - Add notes
+    - Save important links
+    - Store AI prompts and responses
+  </Step>
+
+  <Step title="Explore the Dashboard">
+    Return to the **Dashboard** to see an overview of:
+    - Total number of projects, clients, and bots
+    - Project status distribution
+    - Recent activity
+    
+    The dashboard automatically updates as you add more data to your system.
+  </Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Manage Projects" icon="folder" href="/projects">
+    Learn how to organize notes, links, and prompts within projects
+  </Card>
+  
+  <Card title="Configure Bots" icon="robot" href="/bots">
+    Set up AI-powered bots for automated client interactions
+  </Card>
+  
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Explore the complete API for custom integrations
+  </Card>
+  
+  <Card title="Deployment" icon="rocket" href="/deployment">
+    Deploy GestorPro to production environments
+  </Card>
+</CardGroup>
+
+## Common Operations
+
+### Searching for Clients
+
+Use the client search feature to quickly find existing clients:
+
+```typescript
+// Search by phone number
+import { getClientByPhone } from './services/api';
+
+const client = await getClientByPhone('5493624...');
+if (client) {
+  console.log('Client found:', client.name);
+}
+```
+
+### Managing Project Data
+
+All project data is automatically synced with Google Sheets:
+
+```typescript
+import { getProjects, addProject, updateProject } from './services/api';
+
+// Fetch all projects
+const projects = await getProjects();
+
+// Create a new project
+const newProject = await addProject({
+  name: 'Website Redesign',
+  clientId: 'client-123',
+  startDate: '2024-01-01',
+  endDate: '2024-03-31',
+  budget: 5000,
+  status: ProjectStatus.InProgress
+});
+```
+
+<Note>
+  All API calls automatically include your session ID for authentication. The session is stored in localStorage and persists across page reloads.
+</Note>
+
+## Troubleshooting
+
+### Cannot Connect to Backend
+
+If you see a "Failed to fetch" error:
+
+1. Verify your Google Apps Script URLs are correctly configured
+2. Check that the deployment has "Anyone" access
+3. Test the script URL directly in your browser
+
+<Warning>
+  Every time you update your Google Apps Script code, you must create a new deployment and update your environment variables.
+</Warning>
+
+### Session Expired
+
+If your session expires, you'll be automatically redirected to the login screen. Simply log in again with your credentials.
+
+## Support
+
+Need help? Check out:
+- Installation guide for setup instructions
+- API reference for integration details
+- GitHub repository for source code and issues

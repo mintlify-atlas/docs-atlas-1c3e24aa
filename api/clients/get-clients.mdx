@@ -1,0 +1,264 @@
+---
+title: 'getClients()'
+description: 'Retrieve all client records from the database'
+---
+
+## Method Signature
+
+```typescript
+export const getClients = async (): Promise<Client[]>
+```
+
+<Note>
+  This method is defined in `~/workspace/source/services/api.ts:99`
+</Note>
+
+## Description
+
+Retrieves all client records associated with the authenticated user's spreadsheet. This method does not require any parameters and returns a complete list of clients.
+
+## Parameters
+
+This method does not accept any parameters.
+
+## Return Type
+
+Returns a Promise that resolves to an array of `Client` objects.
+
+<ResponseField name="Client[]" type="array">
+  Array of client objects
+  
+  <Expandable title="Client properties">
+    <ResponseField name="id" type="string" required>
+      Unique identifier for the client
+    </ResponseField>
+    
+    <ResponseField name="name" type="string" required>
+      Client company or organization name
+    </ResponseField>
+    
+    <ResponseField name="contactPerson" type="string" required>
+      Primary contact person's name
+    </ResponseField>
+    
+    <ResponseField name="email" type="string" required>
+      Client's email address
+    </ResponseField>
+    
+    <ResponseField name="phone" type="string" required>
+      Client's phone number
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Code Examples
+
+<CodeGroup>
+
+```typescript Basic Usage
+import { getClients } from './services/api';
+
+const fetchClients = async () => {
+  try {
+    const clients = await getClients();
+    console.log(`Retrieved ${clients.length} clients`);
+    return clients;
+  } catch (error) {
+    console.error('Failed to fetch clients:', error);
+    throw error;
+  }
+};
+```
+
+```typescript React Component
+import { useEffect, useState } from 'react';
+import { getClients } from './services/api';
+import type { Client } from './types';
+
+function ClientList() {
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadClients = async () => {
+      try {
+        const data = await getClients();
+        setClients(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load clients');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadClients();
+  }, []);
+
+  if (loading) return <div>Loading clients...</div>;
+  if (error) return <div>Error: {error}</div>;
+
+  return (
+    <ul>
+      {clients.map(client => (
+        <li key={client.id}>
+          {client.name} - {client.contactPerson}
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+```typescript With Error Handling
+import { getClients } from './services/api';
+import type { Client } from './types';
+
+const loadClientsWithRetry = async (maxRetries = 3): Promise<Client[]> => {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const clients = await getClients();
+      return clients;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Unknown error');
+      console.warn(`Attempt ${attempt} failed:`, lastError.message);
+      
+      if (attempt < maxRetries) {
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+    }
+  }
+  
+  throw lastError || new Error('Failed to fetch clients after retries');
+};
+```
+
+```typescript Filter by Name
+import { getClients } from './services/api';
+
+const searchClients = async (searchTerm: string) => {
+  try {
+    const allClients = await getClients();
+    
+    const filtered = allClients.filter(client => 
+      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.contactPerson.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    return filtered;
+  } catch (error) {
+    console.error('Search failed:', error);
+    throw error;
+  }
+};
+
+// Usage
+const results = await searchClients('acme');
+```
+
+</CodeGroup>
+
+## Response Example
+
+```json
+[
+  {
+    "id": "client_001",
+    "name": "Acme Corporation",
+    "contactPerson": "John Doe",
+    "email": "john@acme.com",
+    "phone": "+1234567890"
+  },
+  {
+    "id": "client_002",
+    "name": "Tech Solutions Ltd",
+    "contactPerson": "Jane Smith",
+    "email": "jane@techsolutions.com",
+    "phone": "+9876543210"
+  }
+]
+```
+
+## Error Handling
+
+The method may throw errors in the following scenarios:
+
+<Warning>
+  Always wrap `getClients()` calls in try-catch blocks to handle potential errors gracefully.
+</Warning>
+
+### Common Errors
+
+<AccordionGroup>
+  <Accordion title="User is not authenticated. No session found.">
+    **Cause**: No valid session found in localStorage
+    
+    **Solution**: Ensure the user is logged in and the session is properly stored
+    
+    ```typescript
+    // Check session before calling
+    const session = localStorage.getItem('user_session');
+    if (!session) {
+      // Redirect to login
+      window.location.href = '/login';
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="ID de hoja de cálculo no encontrado en la sesión">
+    **Cause**: Session exists but doesn't contain `id_sheet` property
+    
+    **Solution**: Ensure the login process correctly stores the spreadsheet ID
+  </Accordion>
+  
+  <Accordion title="Failed to fetch">
+    **Cause**: Cannot connect to the Google Apps Script backend
+    
+    **Solution**: 
+    - Verify the `DATA_SCRIPT_URL` is correct
+    - Check Google Apps Script deployment settings
+    - Ensure "Who has access" is set to "Anyone"
+  </Accordion>
+  
+  <Accordion title="La respuesta del backend no es un JSON válido">
+    **Cause**: Backend returned non-JSON response
+    
+    **Solution**: Check Google Apps Script logs for errors in the backend code
+  </Accordion>
+</AccordionGroup>
+
+## Implementation Details
+
+The method internally calls:
+
+```typescript
+return callAppsScript('getClients');
+```
+
+This sends a POST request to the Google Apps Script backend with:
+- Action: `'getClients'`
+- Payload: User's spreadsheet ID from session
+- No additional data required
+
+## Related Methods
+
+<CardGroup cols={2}>
+  <Card title="getClientByPhone()" icon="phone" href="/api/clients/get-client-by-phone">
+    Find a specific client by phone number
+  </Card>
+  
+  <Card title="addClient()" icon="plus" href="/api/clients/add-client">
+    Create a new client record
+  </Card>
+  
+  <Card title="updateClient()" icon="pen-to-square" href="/api/clients/update-client">
+    Update an existing client
+  </Card>
+  
+  <Card title="deleteClient()" icon="trash" href="/api/clients/delete-client">
+    Delete a client record
+  </Card>
+</CardGroup>

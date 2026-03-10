@@ -1,0 +1,422 @@
+---
+title: 'updateClient()'
+description: 'Update an existing client record in the database'
+---
+
+## Method Signature
+
+```typescript
+export const updateClient = async (clientData: Client): Promise<Client>
+```
+
+<Note>
+  This method is defined in `~/workspace/source/services/api.ts:111`
+</Note>
+
+## Description
+
+Updates an existing client record in the database. The method requires the complete `Client` object including the `id` field to identify which client to update.
+
+## Parameters
+
+<ParamField path="clientData" type="Client" required>
+  Complete client object including the ID
+  
+  <Expandable title="Properties">
+    <ParamField path="id" type="string" required>
+      Unique identifier of the client to update
+    </ParamField>
+    
+    <ParamField path="name" type="string" required>
+      Updated client company or organization name
+    </ParamField>
+    
+    <ParamField path="contactPerson" type="string" required>
+      Updated primary contact person's name
+    </ParamField>
+    
+    <ParamField path="email" type="string" required>
+      Updated client's email address
+    </ParamField>
+    
+    <ParamField path="phone" type="string" required>
+      Updated client's phone number
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Return Type
+
+Returns a Promise that resolves to the updated `Client` object.
+
+<ResponseField name="Client" type="object">
+  The updated client record
+  
+  <Expandable title="Response properties">
+    <ResponseField name="id" type="string">
+      Unique identifier for the client (unchanged)
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Updated client company or organization name
+    </ResponseField>
+    
+    <ResponseField name="contactPerson" type="string">
+      Updated primary contact person's name
+    </ResponseField>
+    
+    <ResponseField name="email" type="string">
+      Updated client's email address
+    </ResponseField>
+    
+    <ResponseField name="phone" type="string">
+      Updated client's phone number
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Code Examples
+
+<CodeGroup>
+
+```typescript Basic Usage
+import { updateClient } from './services/api';
+import type { Client } from './types';
+
+const modifyClient = async (client: Client) => {
+  try {
+    const updatedClient = await updateClient(client);
+    console.log('Client updated successfully:', updatedClient.id);
+    return updatedClient;
+  } catch (error) {
+    console.error('Failed to update client:', error);
+    throw error;
+  }
+};
+```
+
+```typescript Partial Update
+import { getClients, updateClient } from './services/api';
+import type { Client } from './types';
+
+// Update only specific fields while preserving others
+const updateClientPartial = async (
+  clientId: string,
+  updates: Partial<Omit<Client, 'id'>>
+) => {
+  try {
+    // First, fetch the current client data
+    const clients = await getClients();
+    const existingClient = clients.find(c => c.id === clientId);
+    
+    if (!existingClient) {
+      throw new Error(`Client with ID ${clientId} not found`);
+    }
+    
+    // Merge existing data with updates
+    const updatedClient = await updateClient({
+      ...existingClient,
+      ...updates
+    });
+    
+    return updatedClient;
+  } catch (error) {
+    console.error('Failed to update client:', error);
+    throw error;
+  }
+};
+
+// Usage
+await updateClientPartial('client_123', {
+  email: 'newemail@example.com',
+  phone: '+9999999999'
+});
+```
+
+```typescript React Edit Form
+import { useState, useEffect } from 'react';
+import { updateClient } from './services/api';
+import type { Client } from './types';
+
+interface EditClientFormProps {
+  client: Client;
+  onSuccess: (updated: Client) => void;
+  onCancel: () => void;
+}
+
+function EditClientForm({ client, onSuccess, onCancel }: EditClientFormProps) {
+  const [formData, setFormData] = useState<Client>(client);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const updated = await updateClient(formData);
+      onSuccess(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update client');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input
+        type="text"
+        value={formData.name}
+        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+        required
+      />
+      <input
+        type="text"
+        value={formData.contactPerson}
+        onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
+        required
+      />
+      <input
+        type="email"
+        value={formData.email}
+        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+        required
+      />
+      <input
+        type="tel"
+        value={formData.phone}
+        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+        required
+      />
+      <button type="submit" disabled={loading}>
+        {loading ? 'Saving...' : 'Save Changes'}
+      </button>
+      <button type="button" onClick={onCancel} disabled={loading}>
+        Cancel
+      </button>
+      {error && <div className="error">{error}</div>}
+    </form>
+  );
+}
+```
+
+```typescript With Optimistic Update
+import { updateClient } from './services/api';
+import type { Client } from './types';
+
+interface UpdateResult {
+  success: boolean;
+  client: Client | null;
+  error?: string;
+}
+
+const updateClientOptimistically = async (
+  client: Client,
+  onOptimisticUpdate: (client: Client) => void,
+  onRollback: (client: Client) => void
+): Promise<UpdateResult> => {
+  // Store original for potential rollback
+  const original = { ...client };
+  
+  // Optimistically update UI
+  onOptimisticUpdate(client);
+  
+  try {
+    // Perform actual update
+    const updated = await updateClient(client);
+    return { success: true, client: updated };
+  } catch (error) {
+    // Rollback on error
+    onRollback(original);
+    const errorMessage = error instanceof Error ? error.message : 'Update failed';
+    return { success: false, client: null, error: errorMessage };
+  }
+};
+```
+
+```typescript Batch Update
+import { updateClient } from './services/api';
+import type { Client } from './types';
+
+interface BatchUpdateResult {
+  success: Client[];
+  failed: Array<{ client: Client; error: string }>;
+}
+
+const updateMultipleClients = async (
+  clients: Client[]
+): Promise<BatchUpdateResult> => {
+  const result: BatchUpdateResult = {
+    success: [],
+    failed: []
+  };
+  
+  for (const client of clients) {
+    try {
+      const updated = await updateClient(client);
+      result.success.push(updated);
+      console.log(`✓ Updated: ${client.name}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      result.failed.push({ client, error: errorMessage });
+      console.error(`✗ Failed: ${client.name} - ${errorMessage}`);
+    }
+  }
+  
+  console.log(`Batch update: ${result.success.length} succeeded, ${result.failed.length} failed`);
+  return result;
+};
+```
+
+</CodeGroup>
+
+## Request Example
+
+```json
+{
+  "id": "client_1234567890",
+  "name": "Acme Corporation Ltd",
+  "contactPerson": "John Doe Jr.",
+  "email": "john.doe@acme.com",
+  "phone": "+1234567891"
+}
+```
+
+## Response Example
+
+```json
+{
+  "id": "client_1234567890",
+  "name": "Acme Corporation Ltd",
+  "contactPerson": "John Doe Jr.",
+  "email": "john.doe@acme.com",
+  "phone": "+1234567891"
+}
+```
+
+## Error Handling
+
+<Warning>
+  Always ensure the client exists before attempting to update. Invalid IDs will result in backend errors.
+</Warning>
+
+### Common Errors
+
+<AccordionGroup>
+  <Accordion title="User is not authenticated. No session found.">
+    **Cause**: No valid session found in localStorage
+    
+    **Solution**: Ensure the user is logged in before allowing updates
+  </Accordion>
+  
+  <Accordion title="Client not found">
+    **Cause**: No client exists with the provided ID
+    
+    **Solution**: Verify the client ID is correct and the client hasn't been deleted:
+    
+    ```typescript
+    import { getClients, updateClient } from './services/api';
+    
+    const updateClientSafely = async (clientData: Client) => {
+      const clients = await getClients();
+      const exists = clients.some(c => c.id === clientData.id);
+      
+      if (!exists) {
+        throw new Error('Client not found. It may have been deleted.');
+      }
+      
+      return await updateClient(clientData);
+    };
+    ```
+  </Accordion>
+  
+  <Accordion title="Phone number already exists">
+    **Cause**: Another client already uses the new phone number
+    
+    **Solution**: Validate phone uniqueness before updating:
+    
+    ```typescript
+    import { getClientByPhone, updateClient } from './services/api';
+    
+    const updateClientPhone = async (client: Client, newPhone: string) => {
+      if (client.phone !== newPhone) {
+        const existing = await getClientByPhone(newPhone);
+        if (existing && existing.id !== client.id) {
+          throw new Error('Phone number already in use by another client');
+        }
+      }
+      
+      return await updateClient({ ...client, phone: newPhone });
+    };
+    ```
+  </Accordion>
+  
+  <Accordion title="Invalid data format">
+    **Cause**: Backend validation failed
+    
+    **Solution**: Ensure all fields are properly formatted and required fields are not empty
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<Steps>
+  <Step title="Fetch current data first">
+    Always retrieve the latest client data before updating to avoid overwriting concurrent changes
+  </Step>
+  
+  <Step title="Validate changes">
+    Verify that the new data is valid and different from the current data
+  </Step>
+  
+  <Step title="Handle conflicts">
+    Implement conflict resolution for concurrent edits
+  </Step>
+  
+  <Step title="Provide feedback">
+    Give users clear success/error messages after the update
+  </Step>
+  
+  <Step title="Optimistic updates">
+    Update the UI immediately for better UX, but be ready to rollback on errors
+  </Step>
+</Steps>
+
+<Note>
+  **Immutable Updates**: Always create a new object when updating rather than mutating the existing client object.
+</Note>
+
+## Implementation Details
+
+The method internally calls:
+
+```typescript
+return callAppsScript('updateClient', clientData);
+```
+
+This sends a POST request to the Google Apps Script backend with:
+- Action: `'updateClient'`
+- Payload: Complete client object + spreadsheet ID from session
+- Returns: Updated client data
+
+## Related Methods
+
+<CardGroup cols={2}>
+  <Card title="getClients()" icon="list" href="/api/clients/get-clients">
+    Retrieve current client data before updating
+  </Card>
+  
+  <Card title="getClientByPhone()" icon="phone" href="/api/clients/get-client-by-phone">
+    Verify phone uniqueness when updating
+  </Card>
+  
+  <Card title="addClient()" icon="plus" href="/api/clients/add-client">
+    Create a new client instead
+  </Card>
+  
+  <Card title="deleteClient()" icon="trash" href="/api/clients/delete-client">
+    Remove a client record
+  </Card>
+</CardGroup>

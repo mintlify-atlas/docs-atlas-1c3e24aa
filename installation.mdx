@@ -1,0 +1,399 @@
+---
+title: 'Installation'
+description: 'Complete installation and setup guide for GestorPro'
+---
+
+# Installation
+
+This guide covers everything you need to install and configure GestorPro for both development and production environments.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+<CardGroup cols={2}>
+  <Card title="Node.js" icon="node-js">
+    Version 18.0 or higher
+  </Card>
+  <Card title="npm" icon="box">
+    Version 9.0 or higher (comes with Node.js)
+  </Card>
+  <Card title="Google Account" icon="google">
+    Required for Google Apps Script backend
+  </Card>
+  <Card title="Code Editor" icon="code">
+    VS Code, WebStorm, or similar
+  </Card>
+</CardGroup>
+
+## Installation Steps
+
+<Steps>
+  <Step title="Clone the Repository">
+    Clone the GestorPro repository to your local machine:
+    
+    ```bash
+    git clone <repository-url>
+    cd gestorpro
+    ```
+  </Step>
+
+  <Step title="Install Dependencies">
+    Install all required npm packages:
+    
+    ```bash
+    npm install
+    ```
+    
+    This will install the following core dependencies:
+    
+    <CodeGroup>
+    ```json package.json
+    {
+      "dependencies": {
+        "react": "^19.1.1",
+        "react-dom": "^19.1.1",
+        "recharts": "^3.1.0"
+      },
+      "devDependencies": {
+        "@types/node": "^22.14.0",
+        "typescript": "~5.8.2",
+        "vite": "^6.2.0"
+      }
+    }
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Configure Environment Variables">
+    Create a `.env` file in the root directory of your project:
+    
+    ```bash
+    touch .env
+    ```
+    
+    Add the following environment variables:
+    
+    ```bash .env
+    # Google Apps Script URLs
+    VITE_AUTH_SCRIPT_URL=https://script.google.com/macros/s/YOUR_AUTH_SCRIPT_ID/exec
+    VITE_DATA_SCRIPT_URL=https://script.google.com/macros/s/YOUR_DATA_SCRIPT_ID/exec
+    
+    # Optional: Gemini API for AI features
+    GEMINI_API_KEY=your_gemini_api_key_here
+    ```
+    
+    <Warning>
+      **Never commit your `.env` file to version control!** Make sure `.env` is listed in your `.gitignore` file.
+    </Warning>
+    
+    ### How to Get Your Script URLs
+    
+    1. Go to [Google Apps Script](https://script.google.com)
+    2. Create two new projects: one for authentication (`script_auth.js`) and one for data management (`script.js`)
+    3. Deploy each script as a web app:
+       - Click **Deploy** → **New deployment**
+       - Select type: **Web app**
+       - Set **Execute as**: Me
+       - Set **Who has access**: **Anyone**
+       - Click **Deploy**
+       - Copy the web app URL
+    
+    <Note>
+      The configuration system validates these URLs at startup. If they're missing or invalid, the app will display a clear error message:
+      
+      ```typescript
+      if (!AUTH_SCRIPT_URL) {
+        throw new Error(
+          "ERROR DE CONFIGURACIÓN: La variable de entorno VITE_AUTH_SCRIPT_URL no está definida."
+        );
+      }
+      ```
+    </Note>
+  </Step>
+
+  <Step title="Understand the Configuration">
+    GestorPro uses Vite for environment variable management. Here's how the configuration works:
+    
+    <CodeGroup>
+    ```typescript config.ts
+    // Environment variables are validated at startup
+    declare global {
+      interface ImportMeta {
+        readonly env: {
+          readonly VITE_AUTH_SCRIPT_URL: string;
+          readonly VITE_DATA_SCRIPT_URL: string;
+        }
+      }
+    }
+    
+    const AUTH_SCRIPT_URL = import.meta.env.VITE_AUTH_SCRIPT_URL;
+    const DATA_SCRIPT_URL = import.meta.env.VITE_DATA_SCRIPT_URL;
+    
+    // Validation ensures the app fails fast with clear errors
+    if (!AUTH_SCRIPT_URL) {
+      throw new Error(
+        "ERROR DE CONFIGURACIÓN: VITE_AUTH_SCRIPT_URL not defined"
+      );
+    }
+    
+    if (!DATA_SCRIPT_URL) {
+      throw new Error(
+        "ERROR DE CONFIGURACIÓN: VITE_DATA_SCRIPT_URL not defined"
+      );
+    }
+    
+    export { AUTH_SCRIPT_URL, DATA_SCRIPT_URL };
+    ```
+    
+    ```typescript vite.config.ts
+    import path from 'path';
+    import { defineConfig, loadEnv } from 'vite';
+    
+    export default defineConfig(({ mode }) => {
+      const env = loadEnv(mode, '.', '');
+      return {
+        define: {
+          'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+          'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        },
+        resolve: {
+          alias: {
+            '@': path.resolve(__dirname, '.'),
+          }
+        }
+      };
+    });
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Start the Development Server">
+    Run the development server:
+    
+    ```bash
+    npm run dev
+    ```
+    
+    The application will start on `http://localhost:5173` (or another port if 5173 is occupied).
+    
+    You should see output similar to:
+    
+    ```bash
+    VITE v6.2.0  ready in 523 ms
+    
+    ➜  Local:   http://localhost:5173/
+    ➜  Network: use --host to expose
+    ```
+  </Step>
+
+  <Step title="Verify the Installation">
+    Open your browser and navigate to `http://localhost:5173`.
+    
+    You should see the GestorPro authentication screen. If you see an error about missing environment variables, double-check your `.env` file.
+    
+    <Card title="Success Indicators" icon="check">
+      - The login form loads without errors
+      - You can enter a WhatsApp number or email
+      - No console errors related to configuration
+    </Card>
+  </Step>
+</Steps>
+
+## Project Structure
+
+Understanding the project structure will help you navigate and customize GestorPro:
+
+```plaintext
+gestorpro/
+├── components/
+│   ├── Auth.tsx              # Authentication component
+│   ├── Dashboard.tsx         # Main dashboard
+│   ├── Projects.tsx          # Project management
+│   ├── ProjectForm.tsx       # Project creation/editing
+│   ├── Clients.tsx           # Client management
+│   ├── ClientForm.tsx        # Client creation/editing
+│   ├── Bots.tsx              # Bot management
+│   ├── Sidebar.tsx           # Navigation sidebar
+│   └── ...                   # Other components
+├── services/
+│   └── api.ts                # API service layer
+├── types.ts                  # TypeScript type definitions
+├── config.ts                 # Environment configuration
+├── App.tsx                   # Main application component
+├── index.tsx                 # Application entry point
+├── vite.config.ts            # Vite configuration
+├── package.json              # Project dependencies
+├── .env                      # Environment variables (create this)
+└── .gitignore                # Git ignore rules
+```
+
+## API Architecture
+
+GestorPro uses a service layer to communicate with Google Apps Script:
+
+```typescript
+// services/api.ts - All API calls go through this layer
+import { DATA_SCRIPT_URL } from '../config';
+
+async function callAppsScript(action: string, payloadData?: any): Promise<any> {
+  const sessionString = localStorage.getItem('user_session');
+  const session = JSON.parse(sessionString);
+  
+  const fullPayload = {
+    id_sheet: session.id_sheet,
+    data: payloadData,
+  };
+  
+  const res = await fetch(DATA_SCRIPT_URL, {
+    method: 'POST',
+    // Note: Content-Type is intentionally omitted to avoid CORS preflight
+    body: JSON.stringify({ action, payload: fullPayload }),
+    redirect: 'follow'
+  });
+  
+  const response = await res.json();
+  return response.data;
+}
+```
+
+<Note>
+  The `Content-Type` header is intentionally omitted. This prevents CORS preflight requests and ensures better compatibility with Google Apps Script.
+</Note>
+
+## Building for Production
+
+When you're ready to deploy to production:
+
+<Steps>
+  <Step title="Build the Application">
+    ```bash
+    npm run build
+    ```
+    
+    This creates an optimized production build in the `dist/` directory.
+  </Step>
+
+  <Step title="Preview the Production Build">
+    Test the production build locally:
+    
+    ```bash
+    npm run preview
+    ```
+  </Step>
+
+  <Step title="Deploy to a Hosting Platform">
+    Deploy the `dist/` folder to your preferred hosting platform:
+    
+    <CardGroup cols={2}>
+      <Card title="Netlify" icon="netlify">
+        Drag and drop the `dist` folder or connect your Git repository
+      </Card>
+      <Card title="Vercel" icon="v">
+        Import your project and set environment variables in the dashboard
+      </Card>
+    </CardGroup>
+    
+    <Warning>
+      Don't forget to set your environment variables (`VITE_AUTH_SCRIPT_URL` and `VITE_DATA_SCRIPT_URL`) in your hosting platform's settings!
+    </Warning>
+  </Step>
+</Steps>
+
+## Environment-Specific Configuration
+
+### Development
+
+```bash .env.development
+VITE_AUTH_SCRIPT_URL=https://script.google.com/macros/s/DEV_AUTH_ID/exec
+VITE_DATA_SCRIPT_URL=https://script.google.com/macros/s/DEV_DATA_ID/exec
+```
+
+### Production
+
+Set these in your hosting platform (Netlify, Vercel, etc.):
+
+```bash
+VITE_AUTH_SCRIPT_URL=https://script.google.com/macros/s/PROD_AUTH_ID/exec
+VITE_DATA_SCRIPT_URL=https://script.google.com/macros/s/PROD_DATA_ID/exec
+```
+
+## Troubleshooting
+
+### Common Issues
+
+<AccordionGroup>
+  <Accordion title="Failed to fetch / CORS errors">
+    This usually means your Google Apps Script is not properly deployed or accessible.
+    
+    **Solution:**
+    1. Copy your script URL from `.env`
+    2. Paste it in a new browser tab
+    3. You should see an error: "The script completed but did not return anything" ✅ This is good!
+    4. If you see a Google error page, redeploy your script with **"Anyone"** access
+    
+    ```typescript
+    // The app provides detailed troubleshooting in the console
+    const troubleshootingMessage = `
+    🔴 ERROR DE CONEXIÓN (Failed to fetch) 🔴
+    
+    PASO DE DIAGNÓSTICO:
+    1. Copia esta URL: ${DATA_SCRIPT_URL}
+    2. Pégala en una nueva pestaña del navegador
+    
+    QUÉ ESPERAR:
+    - ✅ SI VES UN ERROR "La secuencia de comandos se completó": BUENO
+    - ❌ SI VES UNA PÁGINA DE ERROR DE GOOGLE: Redeployar
+    `;
+    ```
+  </Accordion>
+  
+  <Accordion title="Environment variables not loading">
+    Make sure:
+    - Your `.env` file is in the project root
+    - Variable names start with `VITE_`
+    - You restart the dev server after changing `.env`
+    - No quotes around values in `.env`
+  </Accordion>
+  
+  <Accordion title="TypeScript errors">
+    If you see TypeScript errors, try:
+    
+    ```bash
+    # Clear node_modules and reinstall
+    rm -rf node_modules
+    npm install
+    
+    # Clear Vite cache
+    rm -rf node_modules/.vite
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart Guide" icon="rocket" href="/quickstart">
+    Learn how to use GestorPro with a step-by-step guide
+  </Card>
+  
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Explore the complete API documentation
+  </Card>
+  
+  <Card title="Authentication" icon="lock" href="/authentication">
+    Understand the authentication system
+  </Card>
+  
+  <Card title="Deployment" icon="cloud" href="/deployment">
+    Deploy GestorPro to production
+  </Card>
+</CardGroup>
+
+## Support
+
+If you encounter issues during installation:
+- Check the browser console for detailed error messages
+- Verify your Google Apps Script deployments
+- Ensure all environment variables are correctly set
+- Review the troubleshooting section above

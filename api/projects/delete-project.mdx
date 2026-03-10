@@ -1,0 +1,426 @@
+---
+title: 'deleteProject()'
+description: 'Remove a project from the system'
+---
+
+## Method Signature
+
+```typescript
+export const deleteProject = async (
+  projectId: string
+): Promise<{ success: boolean }>
+```
+
+**Source:** `~/workspace/source/services/api.ts:132`
+
+Deletes a project from the Google Sheets backend. This operation permanently removes the project and cannot be undone.
+
+<Note>
+  This is a destructive operation. Consider implementing a confirmation dialog before calling this method.
+</Note>
+
+## Parameters
+
+<ParamField path="projectId" type="string" required>
+  The unique identifier of the project to delete.
+  
+  ```typescript
+  projectId: 'project-123'
+  ```
+</ParamField>
+
+## Return Type
+
+<ResponseField name="Promise<{ success: boolean }>" type="object">
+  Returns a promise that resolves to an object indicating the operation result.
+  
+  <Expandable title="Success Response">
+    <ResponseField name="success" type="boolean">
+      Indicates whether the deletion was successful. Will be `true` if the project was deleted.
+      
+      ```typescript
+      { success: true }
+      ```
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Implementation Details
+
+The method internally calls:
+
+```typescript
+return callAppsScript('deleteProject', projectId);
+```
+
+This sends a request to the Google Apps Script backend with:
+- Action: `'deleteProject'`
+- Payload: The project ID string
+- Sheet ID: Extracted from `localStorage` user session
+
+## Code Examples
+
+<CodeGroup>
+
+```typescript Basic Usage
+import { deleteProject } from './services/api';
+
+const result = await deleteProject('project-123');
+
+if (result.success) {
+  console.log('Project deleted successfully');
+}
+```
+
+```typescript With Confirmation
+import { deleteProject } from './services/api';
+
+async function handleDeleteProject(projectId: string, projectName: string) {
+  const confirmed = window.confirm(
+    `Are you sure you want to delete "${projectName}"? This action cannot be undone.`
+  );
+  
+  if (!confirmed) {
+    return;
+  }
+  
+  try {
+    const result = await deleteProject(projectId);
+    
+    if (result.success) {
+      alert('Project deleted successfully');
+      // Refresh project list or redirect
+      window.location.href = '/projects';
+    }
+  } catch (error) {
+    console.error('Failed to delete project:', error);
+    alert('Failed to delete project. Please try again.');
+  }
+}
+```
+
+```typescript With Error Handling
+import { deleteProject } from './services/api';
+
+async function safeDeleteProject(projectId: string): Promise<boolean> {
+  try {
+    const result = await deleteProject(projectId);
+    return result.success;
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message.includes('not found')) {
+        console.warn('Project already deleted or does not exist');
+        return true; // Consider it success if already gone
+      }
+      
+      if (error.message.includes('not authenticated')) {
+        // Redirect to login
+        window.location.href = '/login';
+      }
+      
+      console.error('Delete error:', error.message);
+    }
+    return false;
+  }
+}
+```
+
+```typescript React Component
+import { useState } from 'react';
+import { deleteProject } from './services/api';
+import type { Project } from './types';
+
+interface DeleteProjectButtonProps {
+  project: Project;
+  onDeleted: () => void;
+}
+
+function DeleteProjectButton({ project, onDeleted }: DeleteProjectButtonProps) {
+  const [deleting, setDeleting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  async function handleConfirmDelete() {
+    setDeleting(true);
+    
+    try {
+      const result = await deleteProject(project.id);
+      
+      if (result.success) {
+        onDeleted();
+      } else {
+        alert('Failed to delete project');
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert('An error occurred while deleting the project');
+    } finally {
+      setDeleting(false);
+      setShowConfirm(false);
+    }
+  }
+
+  if (showConfirm) {
+    return (
+      <div className="delete-confirm">
+        <p>Delete "{project.name}"?</p>
+        <button onClick={handleConfirmDelete} disabled={deleting}>
+          {deleting ? 'Deleting...' : 'Confirm Delete'}
+        </button>
+        <button onClick={() => setShowConfirm(false)} disabled={deleting}>
+          Cancel
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button 
+      onClick={() => setShowConfirm(true)}
+      className="btn-danger"
+    >
+      Delete Project
+    </button>
+  );
+}
+```
+
+```typescript Bulk Delete
+import { deleteProject } from './services/api';
+
+async function deleteMultipleProjects(
+  projectIds: string[]
+): Promise<{ succeeded: string[], failed: string[] }> {
+  const succeeded: string[] = [];
+  const failed: string[] = [];
+  
+  for (const id of projectIds) {
+    try {
+      const result = await deleteProject(id);
+      
+      if (result.success) {
+        succeeded.push(id);
+      } else {
+        failed.push(id);
+      }
+    } catch (error) {
+      console.error(`Failed to delete project ${id}:`, error);
+      failed.push(id);
+    }
+  }
+  
+  console.log(`Deleted ${succeeded.length} projects, ${failed.length} failed`);
+  return { succeeded, failed };
+}
+
+// Usage
+const projectsToDelete = ['project-1', 'project-2', 'project-3'];
+const result = await deleteMultipleProjects(projectsToDelete);
+```
+
+```typescript Archive Before Delete
+import { getProjects, deleteProject, ProjectStatus } from './services/api';
+import type { Project } from './types';
+
+async function archiveAndDelete(projectId: string) {
+  try {
+    // Fetch project data
+    const projects = await getProjects();
+    const project = projects.find(p => p.id === projectId);
+    
+    if (!project) {
+      throw new Error('Project not found');
+    }
+    
+    // Save to archive (localStorage, external service, etc.)
+    const archive = JSON.parse(localStorage.getItem('archived_projects') || '[]');
+    archive.push({
+      ...project,
+      archivedAt: new Date().toISOString()
+    });
+    localStorage.setItem('archived_projects', JSON.stringify(archive));
+    
+    // Now delete
+    const result = await deleteProject(projectId);
+    
+    if (result.success) {
+      console.log('Project archived and deleted');
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Archive and delete failed:', error);
+    throw error;
+  }
+}
+```
+
+</CodeGroup>
+
+## Important Considerations
+
+<Note>
+  Deleting a project may leave orphaned data in related entities (notes, links, prompts). Consider implementing cascade deletion or cleanup logic.
+</Note>
+
+### Related Data Cleanup
+
+```typescript
+import { 
+  deleteProject, 
+  getNotesByProjectId, 
+  deleteNote,
+  getLinksByProjectId,
+  deleteLink,
+  getPromptsByProjectId,
+  deletePrompt
+} from './services/api';
+
+async function deleteProjectWithRelatedData(projectId: string) {
+  try {
+    // Delete related notes
+    const notes = await getNotesByProjectId(projectId);
+    for (const note of notes) {
+      await deleteNote(note.id);
+    }
+    
+    // Delete related links
+    const links = await getLinksByProjectId(projectId);
+    for (const link of links) {
+      await deleteLink(link.id);
+    }
+    
+    // Delete related prompts
+    const prompts = await getPromptsByProjectId(projectId);
+    for (const prompt of prompts) {
+      await deletePrompt(prompt.id);
+    }
+    
+    // Finally, delete the project
+    const result = await deleteProject(projectId);
+    
+    console.log('Project and all related data deleted');
+    return result;
+  } catch (error) {
+    console.error('Failed to delete project with related data:', error);
+    throw error;
+  }
+}
+```
+
+## Error Scenarios
+
+### Authentication Errors
+
+```typescript
+// Thrown when no session exists in localStorage
+throw new Error('User is not authenticated. No session found.');
+
+// Thrown when session is missing sheet ID
+throw new Error('ID de hoja de cálculo no encontrado en la sesión.');
+```
+
+### Network Errors
+
+```typescript
+// Thrown when backend is unreachable
+throw new Error('Failed to fetch');
+
+// Thrown when response is not valid JSON
+throw new Error('La respuesta del backend no es un JSON válido.');
+```
+
+### Backend Errors
+
+```typescript
+// Thrown when backend returns success: false
+// Examples:
+// - Project ID doesn't exist
+// - Database deletion failure
+// - Sheet permission issues
+// - Project is locked or protected
+throw new Error(response.error || 'Error desconocido en el script de Google.');
+```
+
+## Best Practices
+
+### 1. Always Confirm Before Deletion
+
+```typescript
+if (!confirm(`Delete project "${projectName}"? This cannot be undone.`)) {
+  return;
+}
+```
+
+### 2. Provide User Feedback
+
+```typescript
+try {
+  await deleteProject(id);
+  showSuccessMessage('Project deleted successfully');
+} catch (error) {
+  showErrorMessage('Failed to delete project');
+}
+```
+
+### 3. Update UI After Deletion
+
+```typescript
+const result = await deleteProject(projectId);
+if (result.success) {
+  // Remove from local state
+  setProjects(projects.filter(p => p.id !== projectId));
+}
+```
+
+### 4. Handle Navigation
+
+```typescript
+// If on project detail page, redirect after deletion
+if (result.success && window.location.pathname.includes(projectId)) {
+  window.location.href = '/projects';
+}
+```
+
+### 5. Log Deletions for Audit
+
+```typescript
+await deleteProject(projectId);
+console.log(`Project ${projectId} deleted by user ${userId} at ${new Date().toISOString()}`);
+```
+
+## Security Considerations
+
+<Note>
+  Implement proper authorization checks to ensure users can only delete projects they have permission to manage.
+</Note>
+
+```typescript
+async function authorizedDeleteProject(
+  projectId: string,
+  userId: string
+): Promise<{ success: boolean }> {
+  // Fetch project to check ownership/permissions
+  const projects = await getProjects();
+  const project = projects.find(p => p.id === projectId);
+  
+  if (!project) {
+    throw new Error('Project not found');
+  }
+  
+  // Check if user has permission (implement your authorization logic)
+  if (!userCanDeleteProject(userId, project)) {
+    throw new Error('You do not have permission to delete this project');
+  }
+  
+  return deleteProject(projectId);
+}
+```
+
+## Related Methods
+
+- [getProjects()](/api/projects/get-projects) - Verify project exists before deleting
+- [addProject()](/api/projects/add-project) - Create a new project
+- [updateProject()](/api/projects/update-project) - Modify project instead of deleting
+- [getNotesByProjectId()](/api/notes/get-notes) - Fetch related notes to delete
+- [getLinksByProjectId()](/api/links/get-links) - Fetch related links to delete
+- [getPromptsByProjectId()](/api/prompts/get-prompts) - Fetch related prompts to delete

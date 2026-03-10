@@ -1,0 +1,156 @@
+---
+title: 'Client API Overview'
+description: 'Complete guide to the GestorPro Client API for managing client data'
+---
+
+## Introduction
+
+The Client API provides methods to manage client records in GestorPro. All client operations are performed through the main API service that communicates with Google Apps Script backend.
+
+## Authentication
+
+All Client API methods require an active user session. The authentication is handled automatically through the `callAppsScript` function.
+
+<Note>
+  The session must include a valid `id_sheet` property that identifies the user's Google Spreadsheet.
+</Note>
+
+### Session Requirements
+
+- **Session Storage**: User session must be stored in `localStorage` under the key `user_session`
+- **Session Structure**: Session must be a JSON object containing:
+  - `id_sheet` (string): The Google Spreadsheet ID for the user's data
+
+### Error Handling
+
+If the session is invalid or missing, the API will:
+1. Display an alert to the user
+2. Reload the window to redirect to the login screen
+3. Throw an error: `'User is not authenticated. No session found.'`
+
+## Base URL Configuration
+
+The API communicates with Google Apps Script through a configurable URL:
+
+```typescript
+import { DATA_SCRIPT_URL } from '../config';
+```
+
+The `DATA_SCRIPT_URL` is managed through environment variables and must be configured before using the API.
+
+<Warning>
+  Ensure your Google Apps Script deployment is set to "Anyone" access level to avoid CORS issues.
+</Warning>
+
+## Client Type Definition
+
+All Client API methods work with the following `Client` interface:
+
+```typescript
+export interface Client {
+  id: string;
+  name: string;
+  contactPerson: string;
+  email: string;
+  phone: string;
+}
+```
+
+<Expandable title="Client Field Descriptions">
+  <ResponseField name="id" type="string" required>
+    Unique identifier for the client
+  </ResponseField>
+  
+  <ResponseField name="name" type="string" required>
+    Client company or organization name
+  </ResponseField>
+  
+  <ResponseField name="contactPerson" type="string" required>
+    Primary contact person's name
+  </ResponseField>
+  
+  <ResponseField name="email" type="string" required>
+    Client's email address
+  </ResponseField>
+  
+  <ResponseField name="phone" type="string" required>
+    Client's phone number
+  </ResponseField>
+</Expandable>
+
+## Available Methods
+
+The Client API provides the following methods:
+
+<CardGroup cols={2}>
+  <Card title="Get Clients" icon="list" href="/api/clients/get-clients">
+    Retrieve all client records
+  </Card>
+  
+  <Card title="Get Client by Phone" icon="phone" href="/api/clients/get-client-by-phone">
+    Find a client by phone number
+  </Card>
+  
+  <Card title="Add Client" icon="plus" href="/api/clients/add-client">
+    Create a new client record
+  </Card>
+  
+  <Card title="Update Client" icon="pen-to-square" href="/api/clients/update-client">
+    Modify an existing client
+  </Card>
+  
+  <Card title="Delete Client" icon="trash" href="/api/clients/delete-client">
+    Remove a client record
+  </Card>
+</CardGroup>
+
+## Common Error Scenarios
+
+### Connection Errors
+
+If you encounter a `Failed to fetch` error, this typically means the frontend cannot communicate with the Google Apps Script backend.
+
+<Steps>
+  <Step title="Test the deployment URL">
+    Copy the `DATA_SCRIPT_URL` and paste it into a browser tab
+  </Step>
+  
+  <Step title="Check the response">
+    - ✅ "The script completed but returned nothing" = Deployment is correct
+    - ❌ Google error page = Check your Apps Script deployment
+  </Step>
+  
+  <Step title="Verify deployment settings">
+    Ensure "Who has access" is set to "Anyone" in your Apps Script deployment
+  </Step>
+  
+  <Step title="Update environment variable">
+    Copy the new deployment URL to `VITE_DATA_SCRIPT_URL` in your `.env` file
+  </Step>
+</Steps>
+
+### API Response Errors
+
+The API expects JSON responses from the backend with the following structure:
+
+```typescript
+{
+  success: boolean;
+  data?: any;
+  error?: string;
+}
+```
+
+If `success` is `false`, the error message will be thrown as an exception.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Get Started" icon="rocket" href="/api/clients/get-clients">
+    Learn how to retrieve client data
+  </Card>
+  
+  <Card title="Projects API" icon="folder" href="/api/projects/overview">
+    Explore project management methods
+  </Card>
+</CardGroup>

@@ -1,0 +1,461 @@
+---
+title: 'getClientByPhone()'
+description: 'Find a client record by phone number'
+---
+
+## Method Signature
+
+```typescript
+export const getClientByPhone = async (phone: string): Promise<Client | null>
+```
+
+<Note>
+  This method is defined in `~/workspace/source/services/api.ts:103`
+</Note>
+
+## Description
+
+Searches for and retrieves a client record using their phone number as the lookup key. This method is useful for checking if a client already exists before creating a new record, or for quickly finding a client by their contact information.
+
+## Parameters
+
+<ParamField path="phone" type="string" required>
+  The phone number to search for. Should match the format stored in the database.
+</ParamField>
+
+<Note>
+  Phone number format matters. Ensure the search string matches the format used when the client was created (e.g., with or without country code, spaces, or dashes).
+</Note>
+
+## Return Type
+
+Returns a Promise that resolves to either a `Client` object if found, or `null` if no client exists with the specified phone number.
+
+<ResponseField name="Client | null" type="object | null">
+  The found client object, or null if not found
+  
+  <Expandable title="Client properties (when found)">
+    <ResponseField name="id" type="string">
+      Unique identifier for the client
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Client company or organization name
+    </ResponseField>
+    
+    <ResponseField name="contactPerson" type="string">
+      Primary contact person's name
+    </ResponseField>
+    
+    <ResponseField name="email" type="string">
+      Client's email address
+    </ResponseField>
+    
+    <ResponseField name="phone" type="string">
+      Client's phone number (matches the search parameter)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Code Examples
+
+<CodeGroup>
+
+```typescript Basic Usage
+import { getClientByPhone } from './services/api';
+
+const findClient = async (phone: string) => {
+  try {
+    const client = await getClientByPhone(phone);
+    
+    if (client) {
+      console.log('Client found:', client.name);
+      return client;
+    } else {
+      console.log('No client found with this phone number');
+      return null;
+    }
+  } catch (error) {
+    console.error('Failed to search for client:', error);
+    throw error;
+  }
+};
+```
+
+```typescript Check Before Creating
+import { getClientByPhone, addClient } from './services/api';
+import type { Client } from './types';
+
+const addClientIfNotExists = async (
+  clientData: Omit<Client, 'id'>
+): Promise<Client> => {
+  try {
+    // Check if client already exists
+    const existingClient = await getClientByPhone(clientData.phone);
+    
+    if (existingClient) {
+      console.log('Client already exists:', existingClient.name);
+      
+      const shouldUseExisting = window.confirm(
+        `A client with phone ${clientData.phone} already exists: ${existingClient.name}.\n\n` +
+        `Do you want to use the existing client?`
+      );
+      
+      if (shouldUseExisting) {
+        return existingClient;
+      } else {
+        throw new Error('Client creation cancelled - phone number already in use');
+      }
+    }
+    
+    // Create new client if doesn't exist
+    const newClient = await addClient(clientData);
+    console.log('New client created:', newClient.name);
+    return newClient;
+  } catch (error) {
+    console.error('Failed to add client:', error);
+    throw error;
+  }
+};
+```
+
+```typescript React Search Component
+import { useState } from 'react';
+import { getClientByPhone } from './services/api';
+import type { Client } from './types';
+
+function ClientSearchByPhone() {
+  const [phone, setPhone] = useState('');
+  const [client, setClient] = useState<Client | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setSearched(false);
+
+    try {
+      const result = await getClientByPhone(phone);
+      setClient(result);
+      setSearched(true);
+    } catch (error) {
+      console.error('Search failed:', error);
+      alert('Failed to search for client');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <form onSubmit={handleSearch}>
+        <input
+          type="tel"
+          placeholder="Enter phone number"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          required
+        />
+        <button type="submit" disabled={loading}>
+          {loading ? 'Searching...' : 'Search'}
+        </button>
+      </form>
+
+      {searched && (
+        <div>
+          {client ? (
+            <div className="client-details">
+              <h3>{client.name}</h3>
+              <p>Contact: {client.contactPerson}</p>
+              <p>Email: {client.email}</p>
+              <p>Phone: {client.phone}</p>
+            </div>
+          ) : (
+            <p>No client found with phone number: {phone}</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+```typescript Phone Number Normalization
+import { getClientByPhone } from './services/api';
+
+// Helper function to normalize phone numbers
+function normalizePhone(phone: string): string {
+  // Remove all spaces, dashes, and parentheses
+  return phone.replace(/[\s\-()]/g, '');
+}
+
+const findClientFlexible = async (phone: string) => {
+  try {
+    // Try exact match first
+    let client = await getClientByPhone(phone);
+    
+    if (client) {
+      return client;
+    }
+    
+    // Try normalized version
+    const normalized = normalizePhone(phone);
+    client = await getClientByPhone(normalized);
+    
+    if (client) {
+      return client;
+    }
+    
+    // Try with country code if not present
+    if (!phone.startsWith('+')) {
+      const withCountryCode = `+1${normalized}`;
+      client = await getClientByPhone(withCountryCode);
+    }
+    
+    return client;
+  } catch (error) {
+    console.error('Failed to find client:', error);
+    throw error;
+  }
+};
+```
+
+```typescript Validation Before Update
+import { getClientByPhone, updateClient } from './services/api';
+import type { Client } from './types';
+
+const updateClientPhone = async (
+  client: Client,
+  newPhone: string
+): Promise<Client> => {
+  // Only check if phone number is actually changing
+  if (client.phone === newPhone) {
+    return client;
+  }
+  
+  try {
+    // Check if new phone number is already in use
+    const existingClient = await getClientByPhone(newPhone);
+    
+    if (existingClient && existingClient.id !== client.id) {
+      throw new Error(
+        `Phone number ${newPhone} is already in use by ${existingClient.name}`
+      );
+    }
+    
+    // Safe to update
+    const updatedClient = await updateClient({
+      ...client,
+      phone: newPhone
+    });
+    
+    return updatedClient;
+  } catch (error) {
+    console.error('Failed to update phone:', error);
+    throw error;
+  }
+};
+```
+
+```typescript Batch Phone Lookup
+import { getClientByPhone } from './services/api';
+import type { Client } from './types';
+
+interface PhoneLookupResult {
+  phone: string;
+  client: Client | null;
+}
+
+const lookupMultiplePhones = async (
+  phoneNumbers: string[]
+): Promise<PhoneLookupResult[]> => {
+  const results: PhoneLookupResult[] = [];
+  
+  for (const phone of phoneNumbers) {
+    try {
+      const client = await getClientByPhone(phone);
+      results.push({ phone, client });
+      
+      if (client) {
+        console.log(`✓ Found: ${phone} -> ${client.name}`);
+      } else {
+        console.log(`✗ Not found: ${phone}`);
+      }
+    } catch (error) {
+      console.error(`Error looking up ${phone}:`, error);
+      results.push({ phone, client: null });
+    }
+  }
+  
+  const found = results.filter(r => r.client !== null).length;
+  console.log(`Lookup complete: ${found}/${phoneNumbers.length} found`);
+  
+  return results;
+};
+
+// Usage
+const phoneList = ['+1234567890', '+9876543210', '+1112223333'];
+const results = await lookupMultiplePhones(phoneList);
+```
+
+</CodeGroup>
+
+## Response Examples
+
+### Client Found
+
+```json
+{
+  "id": "client_1234567890",
+  "name": "Acme Corporation",
+  "contactPerson": "John Doe",
+  "email": "john@acme.com",
+  "phone": "+1234567890"
+}
+```
+
+### Client Not Found
+
+```json
+null
+```
+
+## Error Handling
+
+<Note>
+  Unlike other methods, `getClientByPhone()` returning `null` is not an error - it simply means no client exists with that phone number.
+</Note>
+
+### Common Errors
+
+<AccordionGroup>
+  <Accordion title="User is not authenticated. No session found.">
+    **Cause**: No valid session found in localStorage
+    
+    **Solution**: Ensure the user is logged in before performing searches
+  </Accordion>
+  
+  <Accordion title="Failed to fetch">
+    **Cause**: Cannot connect to the Google Apps Script backend
+    
+    **Solution**: Verify the `DATA_SCRIPT_URL` configuration and deployment settings
+  </Accordion>
+  
+  <Accordion title="Invalid phone format">
+    **Cause**: Phone number format doesn't match database records
+    
+    **Solution**: Normalize phone numbers before searching:
+    
+    ```typescript
+    const phone = userInput.replace(/[\s\-()]/g, ''); // Remove formatting
+    const client = await getClientByPhone(phone);
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Phone Number Formatting Tips
+
+<Warning>
+  Phone number matching is exact. Ensure consistent formatting throughout your application.
+</Warning>
+
+<Steps>
+  <Step title="Choose a format">
+    Decide on a standard format (e.g., with country code: `+1234567890`)
+  </Step>
+  
+  <Step title="Normalize on input">
+    Remove spaces, dashes, and parentheses before storing
+  </Step>
+  
+  <Step title="Normalize on search">
+    Apply the same normalization before searching
+  </Step>
+  
+  <Step title="Validate format">
+    Use regex to ensure phone numbers match your chosen format
+  </Step>
+</Steps>
+
+### Recommended Format
+
+```typescript
+// Store phone numbers in E.164 format: +[country code][number]
+// Example: +12025551234
+
+const formatPhone = (input: string): string => {
+  // Remove all non-digit characters
+  const digits = input.replace(/\D/g, '');
+  
+  // Add country code if missing (assuming US: +1)
+  if (digits.length === 10) {
+    return `+1${digits}`;
+  }
+  
+  if (digits.length === 11 && digits.startsWith('1')) {
+    return `+${digits}`;
+  }
+  
+  return `+${digits}`;
+};
+```
+
+## Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Duplicate Prevention" icon="shield">
+    Check if a client exists before creating a new record
+  </Card>
+  
+  <Card title="Quick Lookup" icon="magnifying-glass">
+    Find client details using just a phone number
+  </Card>
+  
+  <Card title="Validation" icon="check">
+    Verify phone uniqueness before updating
+  </Card>
+  
+  <Card title="Import Verification" icon="file-import">
+    Check existing records during bulk imports
+  </Card>
+</CardGroup>
+
+## Implementation Details
+
+The method internally calls:
+
+```typescript
+return callAppsScript('getClientByPhone', phone);
+```
+
+This sends a POST request to the Google Apps Script backend with:
+- Action: `'getClientByPhone'`
+- Payload: Phone number string + spreadsheet ID from session
+- Returns: Client object or `null`
+
+## Performance Considerations
+
+- This method queries the backend database, so it involves network latency
+- For multiple lookups, consider caching results or using `getClients()` once and filtering locally
+- Phone number matching is case-sensitive and format-sensitive
+
+## Related Methods
+
+<CardGroup cols={2}>
+  <Card title="getClients()" icon="list" href="/api/clients/get-clients">
+    Get all clients and search locally
+  </Card>
+  
+  <Card title="addClient()" icon="plus" href="/api/clients/add-client">
+    Create a new client if not found
+  </Card>
+  
+  <Card title="updateClient()" icon="pen-to-square" href="/api/clients/update-client">
+    Update client phone number
+  </Card>
+  
+  <Card title="Client API Overview" icon="book" href="/api/clients/overview">
+    Learn about all client methods
+  </Card>
+</CardGroup>

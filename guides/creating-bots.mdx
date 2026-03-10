@@ -1,0 +1,280 @@
+---
+title: Creating and Configuring AI Chatbots
+description: Learn how to create, configure, and manage AI chatbots in GestorPro
+---
+
+GestorPro allows you to create and manage AI-powered chatbots that can interact with your users through WhatsApp and other messaging platforms.
+
+## Understanding Bot Architecture
+
+Bots in GestorPro are powered by BuilderBot and include:
+
+- **System Instructions**: The core AI behavior and personality
+- **Flows**: Conversation paths and response logic
+- **Connection Status**: Real-time bot availability
+- **QR Code Authentication**: For WhatsApp integration
+
+<Note>
+Bots require a BuilderBot ID to function. This ID links your GestorPro bot to the BuilderBot service.
+</Note>
+
+## Creating a New Bot
+
+<Steps>
+  <Step title="Navigate to Bots">
+    Click on the "Bots" section in the main navigation to view all your AI assistants.
+  </Step>
+  
+  <Step title="Click New Bot">
+    Click the "Nuevo Bot" button in the top right corner to open the bot creation form.
+  </Step>
+  
+  <Step title="Configure Bot Settings">
+    Fill in the following information:
+    - **Bot Name**: A descriptive name for your bot (e.g., "Customer Support Bot", "Sales Assistant")
+    - **Description**: What the bot does and its purpose
+    - **System Instruction**: The AI's core prompt that defines its behavior, personality, and capabilities
+    - **BuilderBot ID**: The unique identifier from BuilderBot (if you have one)
+  </Step>
+  
+  <Step title="Save the Bot">
+    Click "Guardar" to create the bot. It will appear in your bots grid with an initial status.
+  </Step>
+</Steps>
+
+<Tip>
+Bots are automatically sorted by creation date, with the newest bots appearing first.
+</Tip>
+
+## Writing Effective System Instructions
+
+The system instruction is the most important part of your bot configuration. It defines how your bot behaves and responds.
+
+### System Instruction Best Practices
+
+<Steps>
+  <Step title="Define the Bot's Role">
+    Start by clearly stating what the bot is:
+    ```
+    You are a helpful customer support assistant for ACME Company.
+    ```
+  </Step>
+  
+  <Step title="Specify Capabilities">
+    List what the bot can and cannot do:
+    ```
+    You can help with:
+    - Product information
+    - Order status inquiries
+    - General questions about our services
+    
+    You cannot:
+    - Process refunds (direct users to email)
+    - Make changes to orders
+    ```
+  </Step>
+  
+  <Step title="Set the Tone">
+    Define the bot's personality and communication style:
+    ```
+    Be friendly, professional, and concise. Use a warm tone and
+    always thank users for contacting us.
+    ```
+  </Step>
+  
+  <Step title="Add Guidelines">
+    Include specific instructions for handling common scenarios:
+    ```
+    If a user is frustrated, acknowledge their feelings and
+    offer to escalate to a human agent.
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+Avoid including sensitive information like passwords, API keys, or personal data in system instructions. These are stored in plain text and visible in the bot's detail view.
+</Warning>
+
+## Viewing Bot Details
+
+To view comprehensive information about a bot:
+
+1. Click on any bot card in the grid view
+2. A side panel will slide in from the right
+3. The detail view shows:
+   - Current connection status
+   - Control buttons (Connect/Disconnect)
+   - Full system instruction
+   - Bot metadata (IDs, timestamps)
+   - Uptime information
+
+<Tip>
+The bot detail view updates automatically every 5 seconds, so you can monitor status changes in real-time without refreshing.
+</Tip>
+
+## Understanding Bot Status
+
+Bots can have several different statuses:
+
+| Status | Description | Icon Color |
+|--------|-------------|------------|
+| **Online/Active** | Bot is running and responding to messages | Green |
+| **Ready to Scan** | Bot is waiting for QR code authentication | Purple |
+| **Connecting** | Bot is in the process of starting up | Blue |
+| **Pending Sync** | Bot is synchronizing with the service | Gray |
+| **Disconnecting** | Bot is shutting down | Yellow |
+| **Not Found** | Bot connection could not be established | Red |
+| **Failed/Error** | Bot encountered an error | Red |
+
+<Note>
+Status is indicated by both a colored icon and a text label on each bot card.
+</Note>
+
+## Connecting a Bot
+
+<Steps>
+  <Step title="Select a Bot">
+    Click on a bot card to open the detail view.
+  </Step>
+  
+  <Step title="Click Connect">
+    If the bot is offline, click the green "Conectar" button.
+  </Step>
+  
+  <Step title="Wait for Ready Status">
+    The bot will transition to "Conectando" and then "Ready to Scan" status.
+  </Step>
+  
+  <Step title="Scan QR Code">
+    When the status changes to "Ready to Scan", a QR code will automatically appear. Scan it with WhatsApp to authenticate:
+    - Open WhatsApp on your phone
+    - Go to Settings > Linked Devices
+    - Tap "Link a Device"
+    - Scan the QR code displayed in GestorPro
+  </Step>
+  
+  <Step title="Bot Goes Online">
+    Once authenticated, the bot status will change to "Online" and begin responding to messages.
+  </Step>
+</Steps>
+
+<Warning>
+The QR code expires after a short time. If it doesn't load or expires, try disconnecting and reconnecting the bot.
+</Warning>
+
+## Disconnecting a Bot
+
+When you need to stop a bot:
+
+1. Open the bot's detail view
+2. Click the red "Apagar" button
+3. The bot will transition to "Disconnecting" and then go offline
+4. The connection will be terminated
+
+<Tip>
+Disconnecting a bot is useful when you need to:
+- Update the system instructions
+- Perform maintenance
+- Temporarily pause bot responses
+- Switch to a different device
+</Tip>
+
+## Monitoring Bot Uptime
+
+GestorPro tracks how long your bots have been online.
+
+### Active Bots
+
+When a bot is online, you'll see a live timer showing:
+- Hours : Minutes : Seconds format
+- Updates every second in real-time
+
+### Offline Bots
+
+When a bot is offline, you'll see:
+- The last recorded online duration
+- This helps you track total runtime
+
+<Note>
+Uptime tracking starts when the bot successfully connects and resets each time you disconnect and reconnect.
+</Note>
+
+## Editing Bot Configuration
+
+<Steps>
+  <Step title="Open Edit Dialog">
+    Click the "EDITAR" button on the bot card you want to modify.
+  </Step>
+  
+  <Step title="Update Settings">
+    Modify any of the bot's configuration:
+    - Name
+    - Description
+    - System instruction
+    - BuilderBot ID
+  </Step>
+  
+  <Step title="Save Changes">
+    Click "Guardar" to update the bot configuration.
+  </Step>
+</Steps>
+
+<Warning>
+If you change the system instruction while a bot is online, you'll need to disconnect and reconnect the bot for the changes to take effect.
+</Warning>
+
+## Deleting a Bot
+
+<Steps>
+  <Step title="Ensure Bot is Disconnected">
+    It's best practice to disconnect a bot before deleting it.
+  </Step>
+  
+  <Step title="Click Delete">
+    Click the "ELIMINAR" button on the bot card.
+  </Step>
+  
+  <Step title="Confirm Deletion">
+    A confirmation dialog will appear. Click "Sí, Eliminar" to permanently remove the bot.
+  </Step>
+</Steps>
+
+<Warning>
+Deleting a bot is permanent and cannot be undone. The bot will be removed from GestorPro, but any active BuilderBot connections will need to be terminated separately.
+</Warning>
+
+## Frequently Asked Questions
+
+<Accordion title="Do I need a BuilderBot ID to create a bot?">
+Yes, while you can create a bot without initially providing a BuilderBot ID, you'll need one to connect and activate the bot. The BuilderBot ID links your GestorPro bot to the BuilderBot service.
+</Accordion>
+
+<Accordion title="Can I connect multiple bots to the same WhatsApp number?">
+No, each WhatsApp number can only be connected to one bot at a time. You'll need separate WhatsApp numbers for each bot.
+</Accordion>
+
+<Accordion title="Why is my QR code not loading?">
+The QR code may not load if:
+- The bot doesn't have a valid BuilderBot ID
+- There's a connection issue with the BuilderBot service
+- The bot isn't in "Ready to Scan" status
+
+Try disconnecting and reconnecting the bot, or check your BuilderBot configuration.
+</Accordion>
+
+<Accordion title="Can I test my bot before deploying it?">
+You can view the system instruction in the bot detail view to review the configuration. For full testing, you'll need to connect the bot and send messages to it through the connected platform (e.g., WhatsApp).
+</Accordion>
+
+<Accordion title="How do I update my bot's behavior?">
+Edit the bot's system instruction to change its behavior, personality, or capabilities. Remember to disconnect and reconnect the bot for changes to take effect.
+</Accordion>
+
+<Accordion title="What happens if my bot goes offline unexpectedly?">
+If your bot disconnects unexpectedly, check:
+- Your internet connection
+- The BuilderBot service status
+- Whether the WhatsApp connection was terminated
+
+You can reconnect the bot by clicking the "Conectar" button.
+</Accordion>

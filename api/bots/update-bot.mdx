@@ -1,0 +1,413 @@
+---
+title: 'updateBot'
+description: 'Update an existing bot configuration'
+---
+
+## Method Signature
+
+```typescript
+updateBot(botData: Bot): Promise<Bot>
+```
+
+Updates an existing bot's configuration. All fields are required, including system-managed fields like `status` and `updatedAt`.
+
+## Parameters
+
+<ParamField body="botData" type="Bot" required>
+  Complete Bot object with all fields, including the ID of the bot to update
+  
+  <Expandable title="Bot Properties" defaultOpen>
+    <ParamField body="id" type="string" required>
+      The unique identifier of the bot to update
+    </ParamField>
+    
+    <ParamField body="name" type="string" required>
+      Updated display name for the bot
+    </ParamField>
+    
+    <ParamField body="description" type="string" required>
+      Updated description of the bot's purpose
+    </ParamField>
+    
+    <ParamField body="systemInstruction" type="string" required>
+      Updated AI system prompt. Changes take effect on the next conversation.
+    </ParamField>
+    
+    <ParamField body="createdAt" type="string" required>
+      Original creation timestamp (should not be modified)
+    </ParamField>
+    
+    <ParamField body="id_builderBot" type="string" required>
+      BuilderBot instance ID (typically not changed)
+    </ParamField>
+    
+    <ParamField body="status" type="string" required>
+      Current bot status: `"online"`, `"offline"`, or `"connecting"`
+    </ParamField>
+    
+    <ParamField body="updatedAt" type="string" required>
+      Will be automatically updated to current timestamp by backend
+    </ParamField>
+    
+    <ParamField body="onlineSince" type="string">
+      Timestamp when bot went online (if currently online)
+    </ParamField>
+    
+    <ParamField body="lastOnlineDuration" type="string">
+      Duration of previous online session
+    </ParamField>
+    
+    <ParamField body="builderBotApiKey" type="string">
+      BuilderBot API key for authenticated requests
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<Note>
+Unlike `addBot()`, this method requires the complete Bot object including all fields. Typically, you retrieve the bot with `getBots()`, modify the desired fields, and pass the entire object to `updateBot()`.
+</Note>
+
+## Returns
+
+<ResponseField name="Promise<Bot>" type="Promise">
+  Returns a promise that resolves to the updated Bot object with refreshed `updatedAt` timestamp
+</ResponseField>
+
+## Code Examples
+
+<CodeGroup>
+```typescript Basic Update Pattern
+import { getBots, updateBot } from './services/api';
+
+async function updateBotName(botId: string, newName: string) {
+  // 1. Get current bot data
+  const bots = await getBots();
+  const bot = bots.find(b => b.id === botId);
+  
+  if (!bot) {
+    throw new Error(`Bot with ID ${botId} not found`);
+  }
+  
+  // 2. Modify desired fields
+  bot.name = newName;
+  
+  // 3. Update the bot
+  const updatedBot = await updateBot(bot);
+  console.log('Bot updated:', updatedBot);
+  
+  return updatedBot;
+}
+```
+
+```typescript Update System Instruction
+import { getBots, updateBot } from './services/api';
+
+async function updateBotInstructions(botId: string, newInstructions: string) {
+  const bots = await getBots();
+  const bot = bots.find(b => b.id === botId);
+  
+  if (!bot) {
+    throw new Error('Bot not found');
+  }
+  
+  // Update the AI behavior
+  bot.systemInstruction = newInstructions;
+  
+  return await updateBot(bot);
+}
+
+// Example usage
+await updateBotInstructions('bot_123', `
+You are an expert sales assistant with 10 years of experience.
+Your tone should be professional yet approachable.
+Always focus on understanding customer pain points before suggesting solutions.
+Never be pushy or aggressive in your sales approach.
+`);
+```
+
+```typescript React Update Form
+import { useState, useEffect } from 'react';
+import { getBots, updateBot } from './services/api';
+import type { Bot } from './types';
+
+function EditBotForm({ botId }: { botId: string }) {
+  const [bot, setBot] = useState<Bot | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadBot() {
+      const bots = await getBots();
+      const foundBot = bots.find(b => b.id === botId);
+      setBot(foundBot || null);
+    }
+    loadBot();
+  }, [botId]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bot) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const updated = await updateBot(bot);
+      alert('Bot updated successfully!');
+      setBot(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Update failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!bot) return <div>Loading bot...</div>;
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input
+        type="text"
+        value={bot.name}
+        onChange={e => setBot({...bot, name: e.target.value})}
+      />
+      <textarea
+        value={bot.description}
+        onChange={e => setBot({...bot, description: e.target.value})}
+      />
+      <textarea
+        value={bot.systemInstruction}
+        onChange={e => setBot({...bot, systemInstruction: e.target.value})}
+      />
+      <input
+        type="text"
+        value={bot.builderBotApiKey || ''}
+        onChange={e => setBot({...bot, builderBotApiKey: e.target.value})}
+        placeholder="BuilderBot API Key"
+      />
+      {error && <div className="error">{error}</div>}
+      <button type="submit" disabled={loading}>
+        {loading ? 'Updating...' : 'Update Bot'}
+      </button>
+    </form>
+  );
+}
+```
+
+```typescript Batch Update Multiple Bots
+import { getBots, updateBot } from './services/api';
+
+async function updateAllBotInstructions(additionalContext: string) {
+  const bots = await getBots();
+  
+  const updates = bots.map(bot => {
+    // Add additional context to all bot instructions
+    bot.systemInstruction = `${bot.systemInstruction}\n\nAdditional context: ${additionalContext}`;
+    return updateBot(bot);
+  });
+  
+  // Wait for all updates to complete
+  const updatedBots = await Promise.all(updates);
+  console.log(`Updated ${updatedBots.length} bots`);
+  
+  return updatedBots;
+}
+```
+
+```typescript Update with Validation
+import { getBots, updateBot } from './services/api';
+import type { Bot } from './types';
+
+async function safeUpdateBot(
+  botId: string,
+  updates: Partial<Omit<Bot, 'id' | 'createdAt' | 'updatedAt'>>
+) {
+  // Get current bot
+  const bots = await getBots();
+  const bot = bots.find(b => b.id === botId);
+  
+  if (!bot) {
+    throw new Error('Bot not found');
+  }
+  
+  // Validate updates
+  if (updates.name !== undefined) {
+    if (!updates.name.trim()) {
+      throw new Error('Bot name cannot be empty');
+    }
+    if (updates.name.length > 100) {
+      throw new Error('Bot name too long (max 100 characters)');
+    }
+  }
+  
+  if (updates.systemInstruction !== undefined) {
+    if (!updates.systemInstruction.trim()) {
+      throw new Error('System instruction cannot be empty');
+    }
+    if (updates.systemInstruction.length < 50) {
+      throw new Error('System instruction too short (min 50 characters)');
+    }
+  }
+  
+  // Apply updates
+  const updatedBot: Bot = { ...bot, ...updates };
+  
+  // Save changes
+  return await updateBot(updatedBot);
+}
+```
+</CodeGroup>
+
+## Response Example
+
+```json
+{
+  "id": "bot_abc123",
+  "name": "Customer Support Bot Pro",
+  "description": "Enhanced 24/7 customer support with multilingual capabilities",
+  "systemInstruction": "You are an expert customer support assistant with multilingual capabilities. Provide support in English, Spanish, and Portuguese. Be friendly, professional, and efficient.",
+  "createdAt": "2024-03-10T14:30:00Z",
+  "id_builderBot": "bb_xyz789",
+  "status": "online",
+  "updatedAt": "2024-03-15T16:45:00Z",
+  "onlineSince": "2024-03-15T08:00:00Z",
+  "builderBotApiKey": "bbk_live_abcdef123456"
+}
+```
+
+## Common Use Cases
+
+### Update Bot Name and Description
+
+```typescript
+async function rebrandBot(botId: string) {
+  const bots = await getBots();
+  const bot = bots.find(b => b.id === botId);
+  
+  if (!bot) throw new Error('Bot not found');
+  
+  bot.name = "Premium Support Assistant";
+  bot.description = "Enterprise-grade support with priority response";
+  
+  return await updateBot(bot);
+}
+```
+
+### Refine AI Instructions
+
+```typescript
+async function improveAIBehavior(botId: string) {
+  const bots = await getBots();
+  const bot = bots.find(b => b.id === botId);
+  
+  if (!bot) throw new Error('Bot not found');
+  
+  // Add more specific instructions
+  bot.systemInstruction += `
+
+IMPORTANT RULES:
+- Always verify customer identity before sharing sensitive information
+- Escalate to human agent if customer is frustrated or angry
+- Use emojis sparingly and professionally
+- End each conversation by asking if there's anything else you can help with
+`;
+  
+  return await updateBot(bot);
+}
+```
+
+### Update API Key
+
+```typescript
+async function rotateApiKey(botId: string, newApiKey: string) {
+  const bots = await getBots();
+  const bot = bots.find(b => b.id === botId);
+  
+  if (!bot) throw new Error('Bot not found');
+  
+  bot.builderBotApiKey = newApiKey;
+  
+  return await updateBot(bot);
+}
+```
+
+## Error Handling
+
+<CodeGroup>
+```typescript Not Found Error
+import { getBots, updateBot } from './services/api';
+
+async function updateBotSafely(botId: string, updates: any) {
+  try {
+    const bots = await getBots();
+    const bot = bots.find(b => b.id === botId);
+    
+    if (!bot) {
+      throw new Error(`Bot with ID "${botId}" not found`);
+    }
+    
+    Object.assign(bot, updates);
+    return await updateBot(bot);
+  } catch (error) {
+    console.error('Update failed:', error);
+    throw error;
+  }
+}
+```
+
+```typescript Validation Error
+async function updateWithValidation(bot: Bot) {
+  // Prevent clearing critical fields
+  if (!bot.name.trim()) {
+    throw new Error('Bot name is required');
+  }
+  
+  if (!bot.id_builderBot.trim()) {
+    throw new Error('BuilderBot ID is required');
+  }
+  
+  if (!bot.systemInstruction.trim()) {
+    throw new Error('System instruction is required');
+  }
+  
+  try {
+    return await updateBot(bot);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('not found')) {
+      throw new Error('Bot no longer exists in the database');
+    }
+    throw error;
+  }
+}
+```
+</CodeGroup>
+
+## Important Notes
+
+<Warning>
+Do not modify the `status` field directly. Use `connectBot()` and `disconnectBot()` methods to manage bot connection status properly.
+</Warning>
+
+<Note>
+Changes to `systemInstruction` take effect immediately for new conversations. Existing conversations may retain the old instructions until they conclude.
+</Note>
+
+<Warning>
+Changing the `id_builderBot` field may break the connection to WhatsApp. Only update this if you're migrating to a new BuilderBot instance.
+</Warning>
+
+## Best Practices
+
+1. **Always fetch fresh data** before updating to avoid overwriting concurrent changes
+2. **Validate all user input** before calling `updateBot()`
+3. **Keep system instructions focused** - overly long instructions can confuse the AI
+4. **Test instruction changes** in a development bot before updating production
+5. **Log all updates** for audit trail and debugging
+6. **Handle errors gracefully** - show user-friendly messages
+
+## See Also
+
+- [getBots](/api/bots/get-bots) - Retrieve bots to update
+- [addBot](/api/bots/add-bot) - Create a new bot
+- [connectBot](/api/bots/connect-bot) - Change bot connection status
+- [getBotFlows](/api/bots/get-flows) - View bot conversation flows

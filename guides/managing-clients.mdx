@@ -1,0 +1,218 @@
+---
+title: Managing Clients
+description: Learn how to add clients, search for them, and associate them with projects in GestorPro
+---
+
+Clients are the foundation of your project management in GestorPro. Each project must be associated with a client, making it easy to track all work for specific clients.
+
+## Adding a New Client
+
+<Steps>
+  <Step title="Navigate to Clients">
+    Click on the "Clientes" section in the main navigation.
+  </Step>
+  
+  <Step title="Click New Client">
+    Click the "Nuevo Cliente" button in the top right corner to open the client creation form.
+  </Step>
+  
+  <Step title="Fill in Client Information">
+    Enter the following required information:
+    - **Client Name**: The name of the client or company
+    - **Contact Person**: The primary contact person's name
+    - **Email**: Contact email address
+    - **Phone**: Contact phone number
+  </Step>
+  
+  <Step title="Save the Client">
+    Click "Guardar" to create the client. The new client will appear in your clients grid.
+  </Step>
+</Steps>
+
+<Note>
+All fields are required when creating a new client. Make sure you have complete contact information before saving.
+</Note>
+
+## Viewing All Clients
+
+The Clients page displays all your clients in a grid layout with the following information:
+
+- **Client name** (displayed prominently)
+- **Contact person**
+- **Email address** (with envelope icon)
+- **Phone number** (with phone icon)
+- **Action buttons** (Edit and Delete)
+
+<Tip>
+Clients are displayed in a responsive grid that adapts to your screen size:
+- 1 column on mobile devices
+- 2 columns on tablets
+- 3 columns on desktop screens
+</Tip>
+
+## Searching for Clients
+
+GestorPro includes a powerful search feature to help you quickly find clients.
+
+### Using the Client Search
+
+<Steps>
+  <Step title="Locate the Search Box">
+    At the top of the Clients page, you'll find the ClientSearch component.
+  </Step>
+  
+  <Step title="Enter Search Terms">
+    Start typing the client name, contact person, email, or phone number.
+  </Step>
+  
+  <Step title="View Results">
+    The search will filter your clients in real-time as you type.
+  </Step>
+</Steps>
+
+<Note>
+The search function is case-insensitive and searches across all client fields, making it easy to find clients even if you only remember part of their information.
+</Note>
+
+## Editing Client Information
+
+You can update client information at any time.
+
+<Steps>
+  <Step title="Locate the Client">
+    Find the client you want to edit in the clients grid.
+  </Step>
+  
+  <Step title="Click Edit">
+    Click the "EDITAR" button on the client card.
+  </Step>
+  
+  <Step title="Update Information">
+    Modify any of the client fields:
+    - Client name
+    - Contact person
+    - Email address
+    - Phone number
+  </Step>
+  
+  <Step title="Save Changes">
+    Click "Guardar" to update the client information.
+  </Step>
+</Steps>
+
+<Tip>
+Changes to client information will be reflected immediately on all associated projects.
+</Tip>
+
+## Associating Clients with Projects
+
+When creating or editing a project, you'll need to associate it with a client.
+
+### During Project Creation
+
+<Steps>
+  <Step title="Start Creating a Project">
+    Navigate to the Projects section and click "Nuevo Proyecto".
+  </Step>
+  
+  <Step title="Select a Client">
+    In the project form, you'll see a dropdown menu with all available clients.
+  </Step>
+  
+  <Step title="Choose Your Client">
+    Click the dropdown and select the appropriate client for this project.
+  </Step>
+  
+  <Step title="Complete and Save">
+    Fill in the remaining project details and save.
+  </Step>
+</Steps>
+
+<Note>
+You must create a client before you can create a project. If the client dropdown is empty, add clients first.
+</Note>
+
+### Changing a Project's Client
+
+You can reassign a project to a different client:
+
+1. Open the project's edit dialog
+2. Select a different client from the dropdown
+3. Save the changes
+
+The project will now be associated with the new client.
+
+## Deleting a Client
+
+<Warning>
+Deleting a client is a destructive action that will also delete ALL projects associated with that client, including all notes, links, and prompts. This action cannot be undone.
+</Warning>
+
+<Steps>
+  <Step title="Locate the Client">
+    Find the client you want to delete in the clients grid.
+  </Step>
+  
+  <Step title="Click Delete">
+    Click the "ELIMINAR" button on the client card.
+  </Step>
+  
+  <Step title="Read the Warning">
+    A confirmation dialog will appear with a warning about deleting associated projects.
+  </Step>
+  
+  <Step title="Confirm Deletion">
+    If you're sure you want to proceed, click "Sí, Eliminar" to permanently remove the client and all associated data.
+  </Step>
+</Steps>
+
+<Tip>
+Before deleting a client, consider whether you need to:
+- Export or backup any project data
+- Archive projects instead of deleting them
+- Reassign projects to a different client
+</Tip>
+
+## Client Management Best Practices
+
+### Keep Information Up to Date
+
+Regularly review and update client contact information to ensure you can always reach the right person.
+
+### Use Descriptive Names
+
+For companies with multiple contacts, consider including additional context in the contact person field (e.g., "John Smith - Marketing Director").
+
+### Verify Before Deleting
+
+Always double-check that you have the correct client selected before confirming a deletion, as the action is irreversible.
+
+### Organize by Type
+
+Consider using naming conventions to group clients by type or industry (e.g., "ACME Corp - Retail" or "[Agency] Smith Design").
+
+## Frequently Asked Questions
+
+<Accordion title="Can I have projects without a client?">
+No, every project in GestorPro must be associated with a client. If you have personal projects, consider creating a client entry for yourself or a generic "Internal" client.
+</Accordion>
+
+<Accordion title="What happens if I change a client's name?">
+Changing a client's name will update it everywhere in GestorPro, including on all associated project cards. However, this does not affect the client's ID, so all relationships remain intact.
+</Accordion>
+
+<Accordion title="Can I merge duplicate clients?">
+Currently, GestorPro doesn't have a built-in merge feature. You'll need to manually reassign projects from one client to another, then delete the duplicate client.
+</Accordion>
+
+<Accordion title="How many clients can I have?">
+There's no hard limit on the number of clients you can create. The interface will remain performant even with hundreds of clients.
+</Accordion>
+
+<Accordion title="Can I add custom fields to clients?">
+Currently, clients have four fixed fields: name, contact person, email, and phone. Custom fields may be available in future updates based on user feedback.
+</Accordion>
+
+<Accordion title="Is there a way to mark clients as inactive?">
+Currently, there's no inactive status. Consider using a naming convention like "[INACTIVE] Client Name" if you want to keep client records but distinguish inactive ones.
+</Accordion>

@@ -1,0 +1,264 @@
+---
+title: 'getBots'
+description: 'Retrieve all registered WhatsApp bots for the current session'
+---
+
+## Method Signature
+
+```typescript
+getBots(): Promise<Bot[]>
+```
+
+Retrieves all bots associated with the current user session's Google Sheet.
+
+## Parameters
+
+This method takes no parameters. Authentication is handled automatically through the session stored in `localStorage`.
+
+## Returns
+
+<ResponseField name="Promise<Bot[]>" type="Promise">
+  Returns a promise that resolves to an array of Bot objects
+  
+  <Expandable title="Bot" defaultOpen>
+    <ResponseField name="id" type="string" required>
+      Unique identifier for the bot in GestorPro
+    </ResponseField>
+    
+    <ResponseField name="name" type="string" required>
+      Display name of the bot
+    </ResponseField>
+    
+    <ResponseField name="description" type="string" required>
+      Description of the bot's purpose and functionality
+    </ResponseField>
+    
+    <ResponseField name="systemInstruction" type="string" required>
+      AI system prompt that defines the bot's behavior and personality
+    </ResponseField>
+    
+    <ResponseField name="createdAt" type="string" required>
+      ISO 8601 timestamp when the bot was created
+    </ResponseField>
+    
+    <ResponseField name="id_builderBot" type="string" required>
+      BuilderBot instance ID for API integration
+    </ResponseField>
+    
+    <ResponseField name="status" type="string" required>
+      Current connection status: `"online"`, `"offline"`, or `"connecting"`
+    </ResponseField>
+    
+    <ResponseField name="updatedAt" type="string" required>
+      ISO 8601 timestamp of last bot update
+    </ResponseField>
+    
+    <ResponseField name="onlineSince" type="string">
+      Timestamp when bot went online (if currently online)
+    </ResponseField>
+    
+    <ResponseField name="lastOnlineDuration" type="string">
+      Duration of previous online session (e.g., "2h 45m")
+    </ResponseField>
+    
+    <ResponseField name="builderBotApiKey" type="string">
+      BuilderBot API key for authenticated requests
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Code Examples
+
+<CodeGroup>
+```typescript Basic Usage
+import { getBots } from './services/api';
+
+async function loadBots() {
+  try {
+    const bots = await getBots();
+    console.log(`Found ${bots.length} bots`);
+    return bots;
+  } catch (error) {
+    console.error('Failed to load bots:', error);
+    throw error;
+  }
+}
+```
+
+```typescript React Component
+import { useState, useEffect } from 'react';
+import { getBots } from './services/api';
+import type { Bot } from './types';
+
+function BotList() {
+  const [bots, setBots] = useState<Bot[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchBots() {
+      try {
+        const data = await getBots();
+        setBots(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load bots');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchBots();
+  }, []);
+
+  if (loading) return <div>Loading bots...</div>;
+  if (error) return <div>Error: {error}</div>;
+
+  return (
+    <ul>
+      {bots.map(bot => (
+        <li key={bot.id}>
+          <h3>{bot.name}</h3>
+          <p>Status: {bot.status}</p>
+          <p>{bot.description}</p>
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+```typescript Filter Online Bots
+import { getBots } from './services/api';
+
+async function getOnlineBots() {
+  const allBots = await getBots();
+  const onlineBots = allBots.filter(bot => bot.status === 'online');
+  
+  console.log(`${onlineBots.length} of ${allBots.length} bots are online`);
+  return onlineBots;
+}
+```
+
+```typescript Sort by Creation Date
+import { getBots } from './services/api';
+
+async function getRecentBots() {
+  const bots = await getBots();
+  
+  // Sort by creation date, newest first
+  const sortedBots = bots.sort((a, b) => 
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+  
+  return sortedBots;
+}
+```
+</CodeGroup>
+
+## Response Example
+
+```json
+[
+  {
+    "id": "bot_abc123",
+    "name": "Customer Support Bot",
+    "description": "Handles customer inquiries and support tickets",
+    "systemInstruction": "You are a helpful customer support assistant. Be friendly, professional, and solve customer issues efficiently.",
+    "createdAt": "2024-03-10T14:30:00Z",
+    "id_builderBot": "bb_xyz789",
+    "status": "online",
+    "updatedAt": "2024-03-15T09:20:00Z",
+    "onlineSince": "2024-03-15T08:00:00Z",
+    "lastOnlineDuration": "24h 15m",
+    "builderBotApiKey": "bbk_live_abcdef123456"
+  },
+  {
+    "id": "bot_def456",
+    "name": "Sales Assistant Bot",
+    "description": "Qualifies leads and schedules sales calls",
+    "systemInstruction": "You are a sales assistant. Qualify leads, answer product questions, and schedule calls.",
+    "createdAt": "2024-03-08T10:15:00Z",
+    "id_builderBot": "bb_uvw456",
+    "status": "offline",
+    "updatedAt": "2024-03-14T16:45:00Z",
+    "lastOnlineDuration": "12h 30m"
+  }
+]
+```
+
+## Error Handling
+
+<CodeGroup>
+```typescript Try-Catch Pattern
+import { getBots } from './services/api';
+
+async function safeGetBots() {
+  try {
+    return await getBots();
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message.includes('not authenticated')) {
+        console.error('User session expired');
+        // Redirect to login
+      } else if (error.message.includes('Failed to fetch')) {
+        console.error('Network error - check backend connection');
+      } else {
+        console.error('Unknown error:', error.message);
+      }
+    }
+    return [];
+  }
+}
+```
+
+```typescript With Retry Logic
+import { getBots } from './services/api';
+
+async function getBotsWithRetry(maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await getBots();
+    } catch (error) {
+      if (i === maxRetries - 1) throw error;
+      console.log(`Retry ${i + 1}/${maxRetries}...`);
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+    }
+  }
+  return [];
+}
+```
+</CodeGroup>
+
+## Common Error Messages
+
+<ResponseField name="User is not authenticated. No session found." type="Error">
+  The user session is missing from localStorage. This triggers an automatic redirect to login.
+</ResponseField>
+
+<ResponseField name="ID de hoja de cálculo no encontrado en la sesión." type="Error">
+  The session exists but is missing the required `id_sheet` property.
+</ResponseField>
+
+<ResponseField name="Failed to fetch" type="Error">
+  Network connectivity issue or backend (Google Apps Script) is unreachable.
+</ResponseField>
+
+<ResponseField name="Error desconocido en el script de Google." type="Error">
+  The backend returned a failure response without a specific error message.
+</ResponseField>
+
+## Notes
+
+<Note>
+The `getBots()` method automatically includes the user's `id_sheet` from the session. Each user only sees bots associated with their Google Sheet.
+</Note>
+
+<Warning>
+If no session exists, this method will display an alert and force a page reload before throwing an error. Always ensure users are authenticated before calling this method.
+</Warning>
+
+## See Also
+
+- [addBot](/api/bots/add-bot) - Create a new bot
+- [updateBot](/api/bots/update-bot) - Update bot configuration
+- [connectBot](/api/bots/connect-bot) - Connect a bot to WhatsApp

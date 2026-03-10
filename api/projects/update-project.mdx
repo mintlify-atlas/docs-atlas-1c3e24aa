@@ -1,0 +1,454 @@
+---
+title: 'updateProject()'
+description: 'Update an existing project in the system'
+---
+
+## Method Signature
+
+```typescript
+export const updateProject = async (
+  projectData: Omit<Project, 'clientName'>
+): Promise<Project>
+```
+
+**Source:** `~/workspace/source/services/api.ts:128`
+
+Updates an existing project in the Google Sheets backend. The `clientName` field is omitted from input as it's automatically populated by the backend based on the `clientId`.
+
+## Parameters
+
+<ParamField path="projectData" type="Omit<Project, 'clientName'>" required>
+  Complete project data including the `id` of the project to update. The `clientName` is omitted as it's populated by the backend.
+  
+  <Expandable title="Project Update Fields">
+    <ParamField path="id" type="string" required>
+      ID of the project to update. Must reference an existing project.
+      
+      ```typescript
+      id: 'project-123'
+      ```
+    </ParamField>
+    
+    <ParamField path="name" type="string" required>
+      Updated project name
+      
+      ```typescript
+      name: 'Website Redesign - Phase 2'
+      ```
+    </ParamField>
+    
+    <ParamField path="clientId" type="string" required>
+      ID of the client this project belongs to. Can be changed to reassign the project.
+      
+      ```typescript
+      clientId: 'client-456'
+      ```
+    </ParamField>
+    
+    <ParamField path="startDate" type="string" required>
+      Updated project start date in ISO 8601 format (YYYY-MM-DD)
+      
+      ```typescript
+      startDate: '2026-03-15'
+      ```
+    </ParamField>
+    
+    <ParamField path="endDate" type="string" required>
+      Updated project end date in ISO 8601 format (YYYY-MM-DD)
+      
+      ```typescript
+      endDate: '2026-09-15'
+      ```
+    </ParamField>
+    
+    <ParamField path="budget" type="number" required>
+      Updated project budget in currency units
+      
+      ```typescript
+      budget: 75000
+      ```
+    </ParamField>
+    
+    <ParamField path="status" type="ProjectStatus" required>
+      Updated project status. Use the ProjectStatus enum.
+      
+      ```typescript
+      status: ProjectStatus.InProgress
+      ```
+      
+      Available values:
+      - `ProjectStatus.NotStarted` - 'No Iniciado'
+      - `ProjectStatus.InProgress` - 'En Progreso'
+      - `ProjectStatus.Completed` - 'Completado'
+      - `ProjectStatus.OnHold` - 'En Pausa'
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Return Type
+
+<ResponseField name="Promise<Project>" type="Project">
+  Returns a promise that resolves to the updated Project object with refreshed `clientName`.
+  
+  <Expandable title="Project Response">
+    <ResponseField name="id" type="string">
+      Project ID (same as input)
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Updated project name
+    </ResponseField>
+    
+    <ResponseField name="clientId" type="string">
+      Updated client ID
+    </ResponseField>
+    
+    <ResponseField name="clientName" type="string">
+      Name of the associated client (populated by backend)
+    </ResponseField>
+    
+    <ResponseField name="startDate" type="string">
+      Updated start date
+    </ResponseField>
+    
+    <ResponseField name="endDate" type="string">
+      Updated end date
+    </ResponseField>
+    
+    <ResponseField name="budget" type="number">
+      Updated budget
+    </ResponseField>
+    
+    <ResponseField name="status" type="ProjectStatus">
+      Updated project status
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Implementation Details
+
+The method internally calls:
+
+```typescript
+return callAppsScript('updateProject', projectData);
+```
+
+This sends a request to the Google Apps Script backend with:
+- Action: `'updateProject'`
+- Payload: The complete project data object including `id`
+- Sheet ID: Extracted from `localStorage` user session
+
+## Code Examples
+
+<CodeGroup>
+
+```typescript Basic Usage
+import { updateProject, ProjectStatus } from './services/api';
+import type { Project } from './types';
+
+const updatedProject = await updateProject({
+  id: 'project-123',
+  name: 'Mobile App Development - Updated',
+  clientId: 'client-456',
+  startDate: '2026-04-01',
+  endDate: '2026-12-31',
+  budget: 180000,
+  status: ProjectStatus.InProgress
+});
+
+console.log(`Project updated: ${updatedProject.name}`);
+```
+
+```typescript Update Project Status
+import { getProjects, updateProject, ProjectStatus } from './services/api';
+
+async function markProjectAsCompleted(projectId: string) {
+  try {
+    // Fetch current project data
+    const projects = await getProjects();
+    const project = projects.find(p => p.id === projectId);
+    
+    if (!project) {
+      throw new Error('Project not found');
+    }
+    
+    // Update only the status
+    const updated = await updateProject({
+      ...project,
+      status: ProjectStatus.Completed
+    });
+    
+    console.log(`Project "${updated.name}" marked as completed`);
+    return updated;
+  } catch (error) {
+    console.error('Failed to update project status:', error);
+    throw error;
+  }
+}
+```
+
+```typescript Update Budget
+import { updateProject } from './services/api';
+import type { Project } from './types';
+
+async function increaseBudget(
+  project: Project, 
+  additionalAmount: number
+): Promise<Project> {
+  const newBudget = project.budget + additionalAmount;
+  
+  const updated = await updateProject({
+    id: project.id,
+    name: project.name,
+    clientId: project.clientId,
+    startDate: project.startDate,
+    endDate: project.endDate,
+    budget: newBudget,
+    status: project.status
+  });
+  
+  console.log(`Budget increased from ${project.budget} to ${newBudget}`);
+  return updated;
+}
+```
+
+```typescript React Component
+import { useState } from 'react';
+import { updateProject, ProjectStatus } from './services/api';
+import type { Project } from './types';
+
+interface EditProjectFormProps {
+  project: Project;
+  onSuccess: (updated: Project) => void;
+}
+
+function EditProjectForm({ project, onSuccess }: EditProjectFormProps) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    name: project.name,
+    clientId: project.clientId,
+    startDate: project.startDate,
+    endDate: project.endDate,
+    budget: project.budget,
+    status: project.status
+  });
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const updated = await updateProject({
+        id: project.id,
+        ...formData
+      });
+      
+      onSuccess(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input
+        value={formData.name}
+        onChange={e => setFormData({ ...formData, name: e.target.value })}
+        placeholder="Project name"
+        required
+      />
+      <input
+        value={formData.startDate}
+        onChange={e => setFormData({ ...formData, startDate: e.target.value })}
+        type="date"
+        required
+      />
+      <input
+        value={formData.endDate}
+        onChange={e => setFormData({ ...formData, endDate: e.target.value })}
+        type="date"
+        required
+      />
+      <input
+        value={formData.budget}
+        onChange={e => setFormData({ ...formData, budget: parseFloat(e.target.value) })}
+        type="number"
+        placeholder="Budget"
+        required
+      />
+      <select
+        value={formData.status}
+        onChange={e => setFormData({ ...formData, status: e.target.value as ProjectStatus })}
+      >
+        <option value={ProjectStatus.NotStarted}>No Iniciado</option>
+        <option value={ProjectStatus.InProgress}>En Progreso</option>
+        <option value={ProjectStatus.Completed}>Completado</option>
+        <option value={ProjectStatus.OnHold}>En Pausa</option>
+      </select>
+      
+      {error && <div className="error">{error}</div>}
+      
+      <button type="submit" disabled={loading}>
+        {loading ? 'Updating...' : 'Update Project'}
+      </button>
+    </form>
+  );
+}
+```
+
+```typescript Reassign to Different Client
+import { updateProject } from './services/api';
+import type { Project } from './types';
+
+async function reassignProjectToClient(
+  project: Project,
+  newClientId: string
+): Promise<Project> {
+  try {
+    const updated = await updateProject({
+      ...project,
+      clientId: newClientId
+    });
+    
+    console.log(`Project reassigned to client: ${updated.clientName}`);
+    return updated;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('client')) {
+      throw new Error('Invalid client ID. Client does not exist.');
+    }
+    throw error;
+  }
+}
+```
+
+</CodeGroup>
+
+## Important Notes
+
+<Note>
+  You must provide the complete project object including all fields. Consider fetching the current project data first, then modifying only the fields you want to update.
+</Note>
+
+<Note>
+  The `clientName` field is automatically updated by the backend based on the `clientId`. You don't need to provide it in the input.
+</Note>
+
+## Validation Considerations
+
+### Recommended Validations
+
+```typescript
+function validateProjectUpdate(data: Omit<Project, 'clientName'>): string[] {
+  const errors: string[] = [];
+  
+  // ID validation
+  if (!data.id) {
+    errors.push('Project ID is required');
+  }
+  
+  // Name validation
+  if (!data.name || data.name.trim().length === 0) {
+    errors.push('Project name is required');
+  }
+  
+  // Date validation
+  const startDate = new Date(data.startDate);
+  const endDate = new Date(data.endDate);
+  
+  if (endDate <= startDate) {
+    errors.push('End date must be after start date');
+  }
+  
+  // Budget validation
+  if (typeof data.budget !== 'number' || data.budget < 0) {
+    errors.push('Budget must be a positive number');
+  }
+  
+  return errors;
+}
+```
+
+## Error Scenarios
+
+### Authentication Errors
+
+```typescript
+// Thrown when no session exists in localStorage
+throw new Error('User is not authenticated. No session found.');
+
+// Thrown when session is missing sheet ID
+throw new Error('ID de hoja de cálculo no encontrado en la sesión.');
+```
+
+### Network Errors
+
+```typescript
+// Thrown when backend is unreachable
+throw new Error('Failed to fetch');
+
+// Thrown when response is not valid JSON
+throw new Error('La respuesta del backend no es un JSON válido.');
+```
+
+### Backend Errors
+
+```typescript
+// Thrown when backend returns success: false
+// Examples:
+// - Project ID doesn't exist
+// - Invalid clientId (client doesn't exist)
+// - Database write failure
+// - Sheet permission issues
+throw new Error(response.error || 'Error desconocido en el script de Google.');
+```
+
+## Common Use Cases
+
+### Status Progression
+
+```typescript
+import { ProjectStatus } from './services/api';
+
+// Typical project lifecycle
+const statusFlow = [
+  ProjectStatus.NotStarted,
+  ProjectStatus.InProgress,
+  ProjectStatus.Completed
+];
+
+// Can also pause
+const pausedFlow = [
+  ProjectStatus.InProgress,
+  ProjectStatus.OnHold,
+  ProjectStatus.InProgress,
+  ProjectStatus.Completed
+];
+```
+
+### Extend Project Timeline
+
+```typescript
+async function extendProjectDeadline(
+  project: Project,
+  daysToExtend: number
+): Promise<Project> {
+  const currentEnd = new Date(project.endDate);
+  currentEnd.setDate(currentEnd.getDate() + daysToExtend);
+  
+  return updateProject({
+    ...project,
+    endDate: currentEnd.toISOString().split('T')[0]
+  });
+}
+```
+
+## Related Methods
+
+- [getProjects()](/api/projects/get-projects) - Fetch current project data before updating
+- [addProject()](/api/projects/add-project) - Create a new project
+- [deleteProject()](/api/projects/delete-project) - Delete the project
+- [getClients()](/api/clients/get-clients) - Get valid client IDs for reassignment

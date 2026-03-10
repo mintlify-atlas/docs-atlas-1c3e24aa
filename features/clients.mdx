@@ -1,0 +1,305 @@
+---
+title: Client Management
+description: Manage your client portfolio with contact information and powerful search capabilities
+---
+
+The Clients module provides a comprehensive system for managing your business relationships with contact details, search functionality, and project associations.
+
+## Overview
+
+Client management in GestorPro allows you to:
+
+<CardGroup cols={2}>
+  <Card title="Store Contacts" icon="address-book">
+    Maintain detailed contact information for all clients
+  </Card>
+  <Card title="Search Clients" icon="magnifying-glass">
+    Quickly find clients using the built-in search feature
+  </Card>
+  <Card title="Track Projects" icon="folder-open">
+    View all projects associated with each client
+  </Card>
+  <Card title="Manage Portfolio" icon="briefcase">
+    Edit, update, or remove client records as needed
+  </Card>
+</CardGroup>
+
+## Client Data Structure
+
+Each client record contains the following information:
+
+```typescript
+interface Client {
+  id: string;              // Unique identifier
+  name: string;            // Client/company name
+  contactPerson: string;   // Primary contact name
+  email: string;           // Contact email address
+  phone: string;           // Contact phone number
+}
+```
+
+<Info>
+  All fields are required when creating or editing a client to ensure complete contact information.
+</Info>
+
+## Managing Clients
+
+<Tabs>
+  <Tab title="Create Client">
+    ### Adding a New Client
+    
+    <Steps>
+      <Step title="Open Client Form">
+        Click the **"Nuevo Cliente"** button at the top of the Clients page.
+      </Step>
+      
+      <Step title="Enter Details">
+        Fill in all required fields:
+        - **Name**: Client or company name
+        - **Contact Person**: Primary contact's full name
+        - **Email**: Valid email address
+        - **Phone**: Contact phone number
+      </Step>
+      
+      <Step title="Save Client">
+        Click save to add the client to your portfolio. They'll appear in the client grid immediately.
+      </Step>
+    </Steps>
+    
+    <Note>
+      New clients can be immediately associated with projects after creation.
+    </Note>
+  </Tab>
+  
+  <Tab title="Edit Client">
+    ### Updating Client Information
+    
+    To modify an existing client:
+    
+    1. Locate the client in the grid
+    2. Click the **EDITAR** button on their card
+    3. Update any fields in the form
+    4. Save changes to update the client record
+    
+    <Info>
+      Editing a client's name will update how they appear in all associated projects.
+    </Info>
+  </Tab>
+  
+  <Tab title="Delete Client">
+    ### Removing a Client
+    
+    <Warning>
+      Deleting a client will **permanently remove**:
+      - The client record
+      - All associated projects
+      - All project-related data (notes, links, prompts)
+      
+      This action cannot be undone!
+    </Warning>
+    
+    To delete a client:
+    
+    1. Click the **ELIMINAR** button on the client card
+    2. Review the confirmation dialog
+    3. Confirm to permanently delete the client and all associated data
+  </Tab>
+</Tabs>
+
+## Client Search
+
+GestorPro includes a powerful client search feature:
+
+<Accordion title="Search Functionality">
+  The ClientSearch component provides:
+  
+  - **Real-time search**: Results update as you type
+  - **Fuzzy matching**: Finds clients even with partial information
+  - **Multiple field search**: Searches across name, contact person, email, and phone
+  - **Quick access**: Jump directly to client details from search results
+  
+  The search bar is prominently placed at the top of the Clients page for easy access.
+</Accordion>
+
+<Note>
+  The search feature is particularly useful when managing large client portfolios.
+</Note>
+
+## Client Display
+
+### Grid Layout
+
+Clients are displayed in a responsive grid:
+
+- **Mobile**: 1 column
+- **Tablet**: 2 columns  
+- **Desktop**: 3 columns
+
+### Client Cards
+
+Each client card displays:
+
+<CardGroup cols={2}>
+  <Card title="Header" icon="heading">
+    - Client/company name (bold)
+    - Contact person name
+  </Card>
+  
+  <Card title="Contact Info" icon="address-card">
+    - Email with envelope icon
+    - Phone with phone icon
+  </Card>
+  
+  <Card title="Actions" icon="wrench">
+    - EDITAR (Edit) button
+    - ELIMINAR (Delete) button
+  </Card>
+  
+  <Card title="Visual Effects" icon="sparkles">
+    - Hover effect (card lifts)
+    - Shadow for depth
+    - Clean, modern design
+  </Card>
+</CardGroup>
+
+## Client Operations
+
+The Clients component handles these API operations:
+
+```typescript
+// Fetch all clients
+const data = await getClients();
+
+// Add new client
+await addClient(clientData);
+
+// Update existing client  
+await updateClient({ ...editingClient, ...clientData });
+
+// Delete client
+await deleteClient(clientId);
+```
+
+<Info>
+  All operations refresh the client list automatically to keep data synchronized.
+</Info>
+
+## Loading States
+
+The module provides visual feedback during operations:
+
+- **Initial load**: Large centered spinner while fetching clients
+- **Form submission**: Disabled buttons prevent duplicate submissions
+- **Delete operation**: Loading indicator during deletion
+
+```typescript
+const [loading, setLoading] = useState(true);
+const [isSubmitting, setIsSubmitting] = useState(false);
+```
+
+## Confirmation Dialogs
+
+Critical operations require confirmation:
+
+<Warning>
+  The delete confirmation dialog explicitly warns about cascading deletions:
+  
+  _"¿Estás seguro de que quieres eliminar este cliente? Esta acción también eliminará todos sus proyectos asociados y no se puede deshacer."_
+</Warning>
+
+This prevents accidental data loss from cascade deletions.
+
+## Integration with Projects
+
+Clients and projects are tightly integrated:
+
+### How They Connect
+
+1. **Project Creation**: Select from existing clients when creating projects
+2. **Project Display**: Client name appears on project cards
+3. **Cascade Deletion**: Removing a client deletes all associated projects
+
+```typescript
+interface Project {
+  clientId: string;      // References client by ID
+  clientName?: string;   // Cached client name for display
+  // ... other fields
+}
+```
+
+<Info>
+  The project's `clientId` field creates the relationship between clients and projects.
+</Info>
+
+## Client Portfolio Management
+
+### Best Practices
+
+<Steps>
+  <Step title="Complete Information">
+    Always fill in all contact fields to ensure you can reach clients through multiple channels.
+  </Step>
+  
+  <Step title="Regular Updates">
+    Keep client information current, especially when contact persons change.
+  </Step>
+  
+  <Step title="Use Search">
+    Leverage the search feature to quickly find clients in large portfolios.
+  </Step>
+  
+  <Step title="Before Deleting">
+    Review associated projects before deleting a client to prevent unintended data loss.
+  </Step>
+</Steps>
+
+## Styling and UX
+
+The Clients interface features:
+
+- **Clean cards**: White background with shadow for depth
+- **Icon indicators**: Visual icons for email and phone
+- **Color coding**: 
+  - Indigo for primary actions and icons
+  - Red for destructive actions
+- **Hover effects**: Cards lift slightly on hover
+- **Responsive design**: Adapts to all screen sizes
+
+<Note>
+  The interface uses Tailwind CSS for consistent, utility-first styling.
+</Note>
+
+## Error Handling
+
+The module includes error handling for:
+
+- Failed API requests
+- Network issues
+- Invalid form data
+- Deletion conflicts
+
+Errors are logged to the console for debugging:
+
+```typescript
+try {
+  await deleteClient(clientToDelete);
+  fetchClientsData();
+} catch (error) {
+  console.error("Error al eliminar cliente:", error);
+}
+```
+
+## Header Component
+
+The Clients page uses the shared Header component:
+
+```typescript
+<Header 
+  title="Clientes" 
+  subtitle="Gestiona tu cartera de clientes" 
+  buttonText="Nuevo Cliente" 
+  onButtonClick={() => handleOpenModal()} 
+/>
+```
+
+This provides consistent navigation and actions across all modules.

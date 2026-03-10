@@ -1,0 +1,272 @@
+---
+title: Managing Bot Flows and System Prompts
+description: Learn how to view, understand, and work with bot conversation flows and AI prompts in GestorPro
+---
+
+Bot flows define the conversation paths and responses for your AI chatbots. GestorPro provides tools to view and analyze these flows and the prompts that power them.
+
+## Understanding Bot Flows
+
+Flows are the conversation structures that determine how your bot responds to users. Each flow contains:
+
+- **Flow Name**: A descriptive identifier for the conversation path
+- **Flow ID**: A unique identifier
+- **Answers**: Possible responses and actions within this flow
+- **Plugins**: Integrations like OpenAI that power the AI responses
+- **System Prompts**: Instructions embedded within specific flow answers
+
+<Note>
+Flows are managed through BuilderBot and synced with GestorPro for viewing and monitoring.
+</Note>
+
+## Viewing Bot Flows
+
+<Steps>
+  <Step title="Select a Bot">
+    Click on a bot card to open the detail view side panel.
+  </Step>
+  
+  <Step title="Click View Flows">
+    In the Actions section, click the "Ver Flujos" button.
+  </Step>
+  
+  <Step title="Wait for Loading">
+    The system will fetch the flows from BuilderBot. This may take a few seconds.
+  </Step>
+  
+  <Step title="Review Flows">
+    A modal will appear showing all flows configured for this bot.
+  </Step>
+</Steps>
+
+<Warning>
+Viewing flows requires a valid BuilderBot ID. If the bot doesn't have a BuilderBot ID assigned, the "Ver Flujos" button will be disabled.
+</Warning>
+
+## Understanding the Flow List
+
+Each flow in the list displays:
+
+- **Flow name** (in bold)
+- **Flow ID** (in monospace font below the name)
+- **View Details button** to expand the full flow configuration
+
+<Tip>
+Flows are displayed in the order they're configured in BuilderBot. The flow list updates every time you open the modal, so you'll always see the latest configuration.
+</Tip>
+
+## Viewing Detailed Flow Information
+
+<Steps>
+  <Step title="Locate the Flow">
+    In the flows modal, find the flow you want to inspect.
+  </Step>
+  
+  <Step title="Click View Details">
+    Click the "Ver Detalles" button on the right side of the flow.
+  </Step>
+  
+  <Step title="Examine the Configuration">
+    The flow will expand to show the complete JSON configuration, including:
+    - Flow structure
+    - Answer configurations
+    - Plugin settings
+    - Triggers and conditions
+  </Step>
+  
+  <Step title="Hide Details">
+    Click "Ocultar Detalles" to collapse the flow back to its summary view.
+  </Step>
+</Steps>
+
+### Interpreting Flow JSON
+
+The detailed view shows the raw flow configuration in JSON format. Key elements to look for:
+
+```json
+{
+  "id": "unique-flow-id",
+  "name": "Flow Name",
+  "answers": [
+    {
+      "message": "Bot response text",
+      "plugins": {
+        "openai": {
+          "assistantInstructions": "AI behavior for this response"
+        }
+      }
+    }
+  ]
+}
+```
+
+<Note>
+The JSON format is scrollable and displayed in a monospace font for easy reading. You can scroll through long configurations to examine all details.
+</Note>
+
+## Viewing System Prompts
+
+System prompts are AI instructions embedded within specific flow answers. These are separate from the bot's main system instruction.
+
+<Steps>
+  <Step title="Select a Bot">
+    Click on a bot card to open the detail view.
+  </Step>
+  
+  <Step title="Click View Prompts">
+    In the Actions section, click the "Ver Prompts" button.
+  </Step>
+  
+  <Step title="Wait for Extraction">
+    GestorPro will fetch all flows and extract prompts from OpenAI plugin configurations.
+  </Step>
+  
+  <Step title="Review Prompts">
+    A modal will appear showing all system prompts found in the bot's flows.
+  </Step>
+</Steps>
+
+### Understanding the Prompts View
+
+Each prompt displays:
+
+- **Flow name** where the prompt is used
+- **Full prompt text** in a monospace format for easy reading
+
+Prompts are grouped by the flow they belong to, making it easy to understand the context of each prompt.
+
+<Tip>
+If you see multiple prompts from the same flow, it means that flow has different AI behaviors for different answers or conversation branches.
+</Tip>
+
+## When No Flows or Prompts Exist
+
+### No Flows Configured
+
+If a bot has no flows, you'll see:
+- Message: "Este bot no tiene flujos configurados."
+- This means the bot exists in GestorPro but hasn't been configured in BuilderBot yet
+
+### No System Prompts Found
+
+If no prompts are found, you'll see:
+- Message: "No se encontraron prompts de sistema en los flujos de este bot."
+- This can happen if:
+  - The flows don't use OpenAI integration
+  - The flows use other plugin types
+  - The assistantInstructions field isn't configured
+
+<Note>
+A bot can function without explicit system prompts in flows if it relies entirely on its main system instruction.
+</Note>
+
+## Flow and Prompt Management Best Practices
+
+### Regular Review
+
+Periodically review your bot's flows and prompts to ensure they:
+- Align with your current business needs
+- Reflect accurate information
+- Provide helpful responses to users
+
+### Document Flow Purpose
+
+Use descriptive flow names that clearly indicate their purpose:
+- Good: "Customer_Support_FAQ", "Sales_Product_Info", "Booking_Assistance"
+- Avoid: "Flow1", "Test", "Untitled"
+
+### Coordinate with BuilderBot
+
+Remember that:
+- Flows are created and edited in BuilderBot, not GestorPro
+- GestorPro provides a read-only view for monitoring
+- Changes made in BuilderBot will appear in GestorPro
+
+<Warning>
+You cannot edit flows or prompts directly in GestorPro. Use BuilderBot for configuration changes, then view the updates in GestorPro.
+</Warning>
+
+## Troubleshooting Flow Issues
+
+### Flows Not Loading
+
+If flows fail to load:
+
+1. **Check BuilderBot ID**: Ensure the bot has a valid BuilderBot ID assigned
+2. **Verify Connection**: Make sure you have network connectivity
+3. **Check Bot Status**: Some operations may require the bot to be connected
+4. **Review Error Message**: The modal will display specific error details
+
+### Empty Flow List
+
+If the flow list is empty:
+
+1. Verify that flows exist in BuilderBot for this bot ID
+2. Check that the BuilderBot ID is correct
+3. Ensure the BuilderBot service is accessible
+
+### Prompt Extraction Issues
+
+If prompts aren't showing:
+
+1. Verify that your flows use the OpenAI plugin
+2. Check that `assistantInstructions` is configured in the plugin settings
+3. Confirm the flow structure matches the expected format
+
+<Tip>
+If you consistently have issues viewing flows or prompts, verify your BuilderBot configuration and ensure the bot ID is correctly linked between services.
+</Tip>
+
+## Relationship Between System Instructions and Flow Prompts
+
+### Main System Instruction
+
+- Defined at the bot level
+- Applies to all conversations
+- Sets the overall personality and capabilities
+- Visible in the bot's detail view
+
+### Flow-Specific Prompts
+
+- Defined within individual flow answers
+- Apply only when that flow is active
+- Can override or supplement the main instruction
+- Visible in the "Ver Prompts" modal
+
+<Note>
+Flow-specific prompts and the main system instruction work together. The flow prompt provides context-specific behavior while the main instruction maintains consistent personality across all interactions.
+</Note>
+
+## Frequently Asked Questions
+
+<Accordion title="Can I edit flows in GestorPro?">
+No, GestorPro provides a read-only view of flows. All flow creation and editing must be done in BuilderBot. GestorPro syncs with BuilderBot to display the current configuration.
+</Accordion>
+
+<Accordion title="How often do flows sync from BuilderBot?">
+Flows are fetched in real-time when you click "Ver Flujos". This ensures you always see the most current configuration. The main bot data (including status) refreshes automatically every 5 seconds.
+</Accordion>
+
+<Accordion title="What's the difference between the bot's system instruction and flow prompts?">
+The bot's system instruction is the global AI behavior that applies to all conversations. Flow prompts are context-specific instructions that apply only when that particular flow is active. Together, they create nuanced bot behavior.
+</Accordion>
+
+<Accordion title="Can I export flow configurations?">
+Currently, flows are displayed in JSON format in the modal. You can manually copy the JSON from the detail view if needed. Native export functionality may be added in future updates.
+</Accordion>
+
+<Accordion title="Why do some flows not have system prompts?">
+Not all flows require AI-generated responses. Some flows might:
+- Use static, pre-written responses
+- Trigger actions without text responses
+- Rely solely on the main system instruction
+- Use different plugin types that don't require prompts
+</Accordion>
+
+<Accordion title="How do I know which prompt is used for a specific user message?">
+The flow structure in BuilderBot determines which answer (and its associated prompt) is triggered based on user input, triggers, and conditions. Review the full flow JSON to understand the routing logic.
+</Accordion>
+
+<Accordion title="Can I have multiple bots share the same flows?">
+Flows are tied to specific BuilderBot IDs. While you could configure multiple GestorPro bots with the same BuilderBot ID (not recommended), each BuilderBot instance typically has its own unique flow configuration.
+</Accordion>

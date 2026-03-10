@@ -1,0 +1,271 @@
+---
+title: Project Management
+description: Comprehensive project management with status tracking, budgets, and client associations
+---
+
+The Projects module allows you to manage all aspects of your business projects, from planning to completion, with real-time status tracking and budget monitoring.
+
+## Overview
+
+Projects in GestorPro provide a centralized hub for managing:
+
+<CardGroup cols={2}>
+  <Card title="Project Details" icon="clipboard-list">
+    Name, dates, budget, and status tracking
+  </Card>
+  <Card title="Client Association" icon="user-tie">
+    Link projects to specific clients
+  </Card>
+  <Card title="Notes & Links" icon="note-sticky">
+    Attach important information and resources
+  </Card>
+  <Card title="AI Prompts" icon="wand-magic-sparkles">
+    Store and reference AI conversations
+  </Card>
+</CardGroup>
+
+## Project Properties
+
+### Core Fields
+
+Each project includes the following information:
+
+```typescript
+interface Project {
+  id: string;               // Unique identifier
+  name: string;             // Project name
+  clientId: string;         // Associated client
+  clientName?: string;      // Client display name
+  startDate: string;        // Project start date
+  endDate: string;          // Project end date
+  budget: number;           // Project budget
+  status: ProjectStatus;    // Current status
+}
+```
+
+### Project Status
+
+Projects can be in one of four states:
+
+```typescript
+enum ProjectStatus {
+  NotStarted = 'No Iniciado',
+  InProgress = 'En Progreso',
+  Completed = 'Completado',
+  OnHold = 'En Pausa',
+}
+```
+
+<Info>
+  Project status helps you track progress at a glance and filter projects by their current state.
+</Info>
+
+## Managing Projects
+
+<Tabs>
+  <Tab title="Create Project">
+    ### Creating a New Project
+    
+    <Steps>
+      <Step title="Open Project Form">
+        Click the **"Nuevo Proyecto"** button in the Projects header.
+      </Step>
+      
+      <Step title="Fill in Details">
+        Complete the project form with:
+        - Project name
+        - Client selection (dropdown)
+        - Start and end dates
+        - Budget amount
+        - Initial status
+      </Step>
+      
+      <Step title="Save">
+        Click save to create the project. It will appear in the project grid sorted by start date.
+      </Step>
+    </Steps>
+    
+    <Note>
+      Projects are automatically sorted by start date (newest first) after creation.
+    </Note>
+  </Tab>
+  
+  <Tab title="Edit Project">
+    ### Editing an Existing Project
+    
+    You can modify any project details:
+    
+    1. Click the **Edit** button on a project card
+    2. Modify any fields in the project form
+    3. Save changes to update the project
+    
+    <Warning>
+      Changing a project's client will update the association but won't affect historical data.
+    </Warning>
+  </Tab>
+  
+  <Tab title="Delete Project">
+    ### Deleting a Project
+    
+    <Warning>
+      Deleting a project will **permanently remove** all associated data:
+      - Notes
+      - Links
+      - Prompts
+      
+      This action cannot be undone.
+    </Warning>
+    
+    To delete a project:
+    
+    1. Click the **Delete** button on a project card
+    2. Confirm the deletion in the dialog
+    3. The project and all associated data will be removed
+  </Tab>
+</Tabs>
+
+## Project View
+
+### Grid Layout
+
+Projects are displayed in a responsive grid:
+
+- **Mobile**: 1 column
+- **Tablet**: 2 columns
+- **Desktop**: 3 columns
+
+### Project Cards
+
+Each project card displays:
+
+- Project name
+- Client name
+- Status indicator
+- Budget information
+- Date range
+- Action buttons (Edit, Delete)
+
+<Info>
+  Click on any project card to open the detail panel with full information.
+</Info>
+
+## Project Detail Panel
+
+Selecting a project opens a side panel with comprehensive information:
+
+<Accordion title="Detail Panel Features">
+  The detail panel provides a deep dive into project information:
+  
+  - **Full project details**: All fields visible at once
+  - **Associated notes**: View and manage project notes
+  - **Links collection**: Access saved project resources
+  - **AI prompts**: Review stored AI conversations
+  - **Timeline view**: Visual representation of project dates
+  
+  The panel is sticky on desktop for easy reference while browsing other projects.
+</Accordion>
+
+## Responsive Design
+
+<Tabs>
+  <Tab title="Mobile">
+    On mobile devices:
+    - Detail panel opens full-screen
+    - Project grid hides when viewing details
+    - Easy navigation between list and detail views
+  </Tab>
+  
+  <Tab title="Desktop">
+    On desktop:
+    - Split-screen layout (8:4 or 7:5 ratio)
+    - Detail panel sticky on scroll
+    - Projects and details visible simultaneously
+  </Tab>
+</Tabs>
+
+## Project Operations
+
+The Projects component handles these operations:
+
+```typescript
+// Fetch projects and clients
+const [projectsData, clientsData] = await Promise.all([
+  getProjects(),
+  getClients()
+]);
+
+// Create new project
+await addProject(projectData);
+
+// Update existing project
+await updateProject({ ...editingProject, ...projectData });
+
+// Delete project
+await deleteProject(projectId);
+```
+
+<Note>
+  Projects and clients are fetched in parallel for optimal performance.
+</Note>
+
+## Associated Data
+
+Projects can have three types of associated data:
+
+<CardGroup cols={3}>
+  <Card title="Notes" icon="file-lines">
+    Free-form text notes for project documentation, meeting notes, or reminders.
+  </Card>
+  
+  <Card title="Links" icon="link">
+    URLs to important resources like documentation, designs, or staging environments.
+  </Card>
+  
+  <Card title="Prompts" icon="comment-dots">
+    Stored AI prompts and responses for reference and reuse.
+  </Card>
+</CardGroup>
+
+<Warning>
+  All associated data is **permanently deleted** when a project is removed.
+</Warning>
+
+## Loading States
+
+The Projects module provides visual feedback during operations:
+
+- **Initial load**: Centered spinner while fetching data
+- **Form submission**: Disabled buttons with loading state
+- **Delete operation**: Loading indicator during deletion
+
+## Client Integration
+
+Projects are tightly integrated with the Clients module:
+
+- **Client dropdown**: Select from existing clients when creating/editing
+- **Client name display**: Automatically shows client name on project cards
+- **Client deletion**: Deleting a client removes all associated projects
+
+<Info>
+  Make sure to create clients before creating projects that reference them.
+</Info>
+
+## Best Practices
+
+<Steps>
+  <Step title="Set Realistic Dates">
+    Use accurate start and end dates for better project timeline visualization.
+  </Step>
+  
+  <Step title="Update Status Regularly">
+    Keep project status current to maintain accurate project dashboards.
+  </Step>
+  
+  <Step title="Track Budgets">
+    Enter project budgets to monitor financial commitments across all projects.
+  </Step>
+  
+  <Step title="Use Notes and Links">
+    Leverage associated data to keep project information organized and accessible.
+  </Step>
+</Steps>

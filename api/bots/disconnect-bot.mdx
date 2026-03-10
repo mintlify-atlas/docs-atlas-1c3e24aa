@@ -1,0 +1,456 @@
+---
+title: 'disconnectBot'
+description: 'Disconnect a bot from WhatsApp and take it offline'
+---
+
+## Method Signature
+
+```typescript
+disconnectBot(botId: string): Promise<{ success: boolean }>
+```
+
+Disconnects a bot from WhatsApp, changing its status to "offline". The bot will stop responding to messages until reconnected.
+
+## Parameters
+
+<ParamField path="botId" type="string" required>
+  The unique identifier of the bot to disconnect. This is the GestorPro bot ID, not the BuilderBot ID.
+</ParamField>
+
+## Returns
+
+<ResponseField name="Promise<{ success: boolean }>" type="Promise">
+  Returns a promise that resolves to an object with a success flag
+  
+  <Expandable title="Response Object">
+    <ResponseField name="success" type="boolean" required>
+      `true` if the bot was successfully disconnected, `false` otherwise
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Code Examples
+
+<CodeGroup>
+```typescript Basic Usage
+import { disconnectBot } from './services/api';
+
+async function takeBotOffline(botId: string) {
+  try {
+    const result = await disconnectBot(botId);
+    
+    if (result.success) {
+      console.log('Bot is now offline and will not respond to messages');
+    } else {
+      console.error('Failed to disconnect bot');
+    }
+    
+    return result.success;
+  } catch (error) {
+    console.error('Error disconnecting bot:', error);
+    throw error;
+  }
+}
+```
+
+```typescript With Status Verification
+import { disconnectBot, getBots } from './services/api';
+
+async function disconnectAndVerify(botId: string) {
+  // Disconnect the bot
+  const result = await disconnectBot(botId);
+  
+  if (!result.success) {
+    throw new Error('Failed to disconnect bot');
+  }
+  
+  // Verify status changed
+  const bots = await getBots();
+  const bot = bots.find(b => b.id === botId);
+  
+  if (bot?.status === 'offline') {
+    console.log(`Bot "${bot.name}" is now offline`);
+    
+    if (bot.lastOnlineDuration) {
+      console.log(`Was online for: ${bot.lastOnlineDuration}`);
+    }
+    
+    return true;
+  } else {
+    console.warn(`Bot status is "${bot?.status}", expected "offline"`);
+    return false;
+  }
+}
+```
+
+```typescript React Component
+import { useState } from 'react';
+import { connectBot, disconnectBot } from './services/api';
+import type { Bot } from './types';
+
+function BotPowerButton({ bot, onStatusChange }: { 
+  bot: Bot; 
+  onStatusChange: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleToggle = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      let result;
+      
+      if (bot.status === 'online') {
+        result = await disconnectBot(bot.id);
+        if (result.success) {
+          console.log('Bot taken offline');
+        }
+      } else {
+        result = await connectBot(bot.id);
+        if (result.success) {
+          console.log('Bot brought online');
+        }
+      }
+      
+      if (result.success) {
+        onStatusChange();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Operation failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isOnline = bot.status === 'online';
+
+  return (
+    <div className="bot-power-control">
+      <button 
+        onClick={handleToggle} 
+        disabled={loading}
+        className={isOnline ? 'online' : 'offline'}
+      >
+        {loading ? '⏳' : isOnline ? '🟢 Online' : '🔴 Offline'}
+      </button>
+      {error && <div className="error">{error}</div>}
+      {isOnline && bot.onlineSince && (
+        <small>Online since {new Date(bot.onlineSince).toLocaleString()}</small>
+      )}
+    </div>
+  );
+}
+```
+
+```typescript Scheduled Disconnect
+import { disconnectBot, getBots } from './services/api';
+
+async function disconnectBotAtEndOfDay(botId: string) {
+  const now = new Date();
+  const endOfDay = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    23, 59, 59 // 11:59:59 PM
+  );
+  
+  const msUntilEndOfDay = endOfDay.getTime() - now.getTime();
+  
+  console.log(`Bot will disconnect in ${msUntilEndOfDay / 1000 / 60} minutes`);
+  
+  setTimeout(async () => {
+    try {
+      const result = await disconnectBot(botId);
+      
+      if (result.success) {
+        console.log('Bot automatically disconnected at end of day');
+        
+        // Log session duration
+        const bots = await getBots();
+        const bot = bots.find(b => b.id === botId);
+        console.log(`Session duration: ${bot?.lastOnlineDuration}`);
+      }
+    } catch (error) {
+      console.error('Failed to auto-disconnect bot:', error);
+    }
+  }, msUntilEndOfDay);
+}
+```
+
+```typescript Graceful Shutdown
+import { disconnectBot, getBots } from './services/api';
+
+async function gracefulBotShutdown(botId: string) {
+  console.log('Initiating graceful shutdown...');
+  
+  // 1. Get current bot status
+  const bots = await getBots();
+  const bot = bots.find(b => b.id === botId);
+  
+  if (!bot) {
+    throw new Error('Bot not found');
+  }
+  
+  if (bot.status !== 'online') {
+    console.log('Bot is already offline');
+    return;
+  }
+  
+  // 2. Log uptime before disconnect
+  console.log(`Bot "${bot.name}" has been online since ${bot.onlineSince}`);
+  
+  // 3. Disconnect the bot
+  const result = await disconnectBot(botId);
+  
+  if (!result.success) {
+    throw new Error('Failed to disconnect bot');
+  }
+  
+  console.log('Bot disconnected successfully');
+  
+  // 4. Verify and log final status
+  const updatedBots = await getBots();
+  const updatedBot = updatedBots.find(b => b.id === botId);
+  
+  if (updatedBot?.lastOnlineDuration) {
+    console.log(`Final session duration: ${updatedBot.lastOnlineDuration}`);
+  }
+  
+  return updatedBot;
+}
+```
+</CodeGroup>
+
+## Response Example
+
+```json
+{
+  "success": true
+}
+```
+
+## Use Cases
+
+### Maintenance Mode
+
+```typescript
+import { disconnectBot, getBots, updateBot } from './services/api';
+
+async function enterMaintenanceMode(botId: string) {
+  // Disconnect bot
+  await disconnectBot(botId);
+  
+  // Update description to indicate maintenance
+  const bots = await getBots();
+  const bot = bots.find(b => b.id === botId);
+  
+  if (bot) {
+    bot.description = `[MAINTENANCE] ${bot.description}`;
+    await updateBot(bot);
+  }
+  
+  console.log('Bot in maintenance mode');
+}
+
+async function exitMaintenanceMode(botId: string) {
+  // Update description
+  const bots = await getBots();
+  const bot = bots.find(b => b.id === botId);
+  
+  if (bot) {
+    bot.description = bot.description.replace('[MAINTENANCE] ', '');
+    await updateBot(bot);
+  }
+  
+  // Reconnect bot
+  await connectBot(botId);
+  
+  console.log('Bot maintenance complete');
+}
+```
+
+### Business Hours Automation
+
+```typescript
+import { connectBot, disconnectBot } from './services/api';
+
+function scheduleBusinessHours(botId: string) {
+  const BUSINESS_START = 9; // 9 AM
+  const BUSINESS_END = 17;  // 5 PM
+  
+  function checkAndToggle() {
+    const now = new Date();
+    const hour = now.getHours();
+    const isBusinessHours = hour >= BUSINESS_START && hour < BUSINESS_END;
+    const isWeekday = now.getDay() >= 1 && now.getDay() <= 5;
+    
+    if (isBusinessHours && isWeekday) {
+      connectBot(botId).then(() => console.log('Bot online for business hours'));
+    } else {
+      disconnectBot(botId).then(() => console.log('Bot offline outside business hours'));
+    }
+  }
+  
+  // Check immediately
+  checkAndToggle();
+  
+  // Check every hour
+  setInterval(checkAndToggle, 60 * 60 * 1000);
+}
+```
+
+### Emergency Shutdown
+
+```typescript
+import { disconnectBot, getBots } from './services/api';
+
+async function emergencyShutdownAllBots() {
+  console.warn('⚠️ EMERGENCY SHUTDOWN INITIATED');
+  
+  const bots = await getBots();
+  const onlineBots = bots.filter(b => b.status === 'online');
+  
+  console.log(`Disconnecting ${onlineBots.length} active bots...`);
+  
+  const disconnectPromises = onlineBots.map(bot => 
+    disconnectBot(bot.id)
+      .then(() => console.log(`✓ ${bot.name} disconnected`))
+      .catch(err => console.error(`✗ Failed to disconnect ${bot.name}:`, err))
+  );
+  
+  await Promise.allSettled(disconnectPromises);
+  
+  console.log('Emergency shutdown complete');
+}
+```
+
+## Error Handling
+
+<CodeGroup>
+```typescript Basic Error Handling
+import { disconnectBot } from './services/api';
+
+async function safeDisconnectBot(botId: string) {
+  try {
+    const result = await disconnectBot(botId);
+    
+    if (!result.success) {
+      throw new Error('Disconnect request was unsuccessful');
+    }
+    
+    return true;
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message.includes('not found')) {
+        console.error('Bot does not exist');
+      } else if (error.message.includes('already offline')) {
+        console.warn('Bot is already disconnected');
+      } else {
+        console.error('Disconnect error:', error.message);
+      }
+    }
+    return false;
+  }
+}
+```
+
+```typescript With Retry Logic
+import { disconnectBot } from './services/api';
+
+async function disconnectBotWithRetry(botId: string, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await disconnectBot(botId);
+      
+      if (result.success) {
+        console.log(`Disconnected successfully on attempt ${attempt}`);
+        return true;
+      }
+      
+      console.log(`Attempt ${attempt} failed, retrying...`);
+    } catch (error) {
+      console.error(`Attempt ${attempt} error:`, error);
+      
+      if (attempt === maxRetries) {
+        throw new Error(`Failed to disconnect after ${maxRetries} attempts`);
+      }
+    }
+    
+    await new Promise(r => setTimeout(r, 2000 * attempt));
+  }
+  
+  return false;
+}
+```
+</CodeGroup>
+
+## Important Notes
+
+<Note>
+The `disconnectBot()` method returns `success: true` immediately, but the bot's status update to "offline" may take a few seconds. Implement polling or refresh mechanisms to verify the final status.
+</Note>
+
+<Warning>
+When a bot is disconnected, it will stop responding to incoming WhatsApp messages immediately. Make sure to inform your users before taking bots offline.
+</Warning>
+
+<Note>
+After disconnecting, the bot's `lastOnlineDuration` field is updated with the length of the session. The `onlineSince` field is cleared.
+</Note>
+
+## Status Tracking
+
+```typescript
+import { disconnectBot, getBots } from './services/api';
+
+async function disconnectWithTracking(botId: string) {
+  // Get initial status
+  const botsBefore = await getBots();
+  const botBefore = botsBefore.find(b => b.id === botId);
+  
+  console.log('Before disconnect:', {
+    status: botBefore?.status,
+    onlineSince: botBefore?.onlineSince,
+    lastDuration: botBefore?.lastOnlineDuration
+  });
+  
+  // Disconnect
+  const result = await disconnectBot(botId);
+  
+  if (!result.success) {
+    throw new Error('Disconnect failed');
+  }
+  
+  // Get updated status
+  const botsAfter = await getBots();
+  const botAfter = botsAfter.find(b => b.id === botId);
+  
+  console.log('After disconnect:', {
+    status: botAfter?.status,
+    onlineSince: botAfter?.onlineSince,
+    lastDuration: botAfter?.lastOnlineDuration
+  });
+  
+  return {
+    wasOnlineFor: botAfter?.lastOnlineDuration,
+    now: botAfter?.status
+  };
+}
+```
+
+## Best Practices
+
+1. **Check current status** before disconnecting to avoid unnecessary API calls
+2. **Implement confirmation dialogs** for user-initiated disconnects
+3. **Log disconnect events** for audit trails and troubleshooting
+4. **Handle disconnect gracefully** - inform users when bots go offline
+5. **Track uptime** using `onlineSince` and `lastOnlineDuration` for analytics
+6. **Set up alerts** for unexpected disconnections
+
+## See Also
+
+- [connectBot](/api/bots/connect-bot) - Bring a bot back online
+- [getBots](/api/bots/get-bots) - Check bot status after disconnection
+- [updateBot](/api/bots/update-bot) - Update bot configuration while offline

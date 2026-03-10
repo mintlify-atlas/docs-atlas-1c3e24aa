@@ -1,0 +1,433 @@
+---
+title: AI Bot Management
+description: Create and manage AI chatbots with WhatsApp integration and real-time status monitoring
+---
+
+The Bots module enables you to create, configure, and manage AI-powered chatbots with WhatsApp integration through BuilderBot.
+
+## Overview
+
+Bot management in GestorPro provides:
+
+<CardGroup cols={2}>
+  <Card title="AI Configuration" icon="robot">
+    Create bots with custom system instructions and AI behavior
+  </Card>
+  <Card title="WhatsApp Integration" icon="whatsapp">
+    Connect bots to WhatsApp via BuilderBot platform
+  </Card>
+  <Card title="Real-time Monitoring" icon="chart-line">
+    Track bot status, uptime, and connection health
+  </Card>
+  <Card title="Flow Management" icon="sitemap">
+    View and manage conversation flows with AI assistant integration
+  </Card>
+</CardGroup>
+
+## Bot Data Structure
+
+Each bot contains the following information:
+
+```typescript
+interface Bot {
+  id: string;                    // Unique identifier
+  name: string;                  // Bot display name
+  description: string;           // Bot purpose/description
+  systemInstruction: string;     // AI system prompt
+  createdAt: string;             // Creation timestamp
+  id_builderBot: string;         // BuilderBot platform ID
+  status: string;                // Current connection status
+  updatedAt: string;             // Last sync timestamp
+  onlineSince?: string;          // When bot went online
+  lastOnlineDuration?: string;   // Last active duration
+  builderBotApiKey?: string;     // API authentication key
+}
+```
+
+<Info>
+  The `systemInstruction` field defines the bot's personality and behavior using AI prompts.
+</Info>
+
+## Bot Status
+
+Bots can be in various states:
+
+<Tabs>
+  <Tab title="Active States">
+    ### Online and Connected
+    
+    - **ONLINE / ACTIVE**: Bot is connected and responding to messages
+    - **CONNECTING**: Bot is in the process of connecting to WhatsApp
+    - **READY_TO_SCAN**: QR code is ready for scanning
+    
+    <Note>
+      When online, bots display a real-time uptime timer showing how long they've been active.
+    </Note>
+  </Tab>
+  
+  <Tab title="Inactive States">
+    ### Offline and Error States
+    
+    - **NOT_FOUND**: Bot has no active connection
+    - **FAILED**: Connection attempt failed
+    - **ERROR**: Bot encountered an error
+    - **DISCONNECTING**: Bot is shutting down
+    - **PENDING SYNC**: Bot is synchronizing with the platform
+    
+    <Warning>
+      Bots in error states should be reconnected or reconfigured.
+    </Warning>
+  </Tab>
+</Tabs>
+
+## Managing Bots
+
+<Steps>
+  <Step title="Create Bot">
+    Click **"Nuevo Bot"** and fill in:
+    - Bot name
+    - Description
+    - System instruction (AI prompt)
+    - BuilderBot ID
+    - API key (optional)
+  </Step>
+  
+  <Step title="Connect to WhatsApp">
+    After creation, click **"Conectar"** to start the connection process.
+  </Step>
+  
+  <Step title="Scan QR Code">
+    When status becomes "READY_TO_SCAN", scan the displayed QR code with WhatsApp.
+  </Step>
+  
+  <Step title="Bot Goes Online">
+    After successful scan, the bot status changes to "ONLINE" and starts responding to messages.
+  </Step>
+</Steps>
+
+## Bot Detail Panel
+
+Clicking on a bot card opens a comprehensive detail panel:
+
+### Action Controls
+
+<Tabs>
+  <Tab title="Connect">
+    ### Connecting a Bot
+    
+    When a bot is offline:
+    
+    1. Click the green **"Conectar"** button
+    2. Wait for status to change to "READY_TO_SCAN"
+    3. Scan the generated QR code with WhatsApp
+    4. Bot status changes to "ONLINE"
+    
+    <Info>
+      The QR code is automatically generated and refreshed if needed.
+    </Info>
+  </Tab>
+  
+  <Tab title="Disconnect">
+    ### Disconnecting a Bot
+    
+    When a bot is online:
+    
+    1. Click the red **"Apagar"** button
+    2. Confirm the disconnect action
+    3. Bot status changes to "NOT_FOUND" or similar offline state
+    
+    <Note>
+      The system tracks the duration the bot was online before disconnection.
+    </Note>
+  </Tab>
+  
+  <Tab title="View Flows">
+    ### Viewing Conversation Flows
+    
+    Click **"Ver Flujos"** to see:
+    
+    - All configured conversation flows
+    - Flow names and IDs
+    - Detailed flow configuration (expandable)
+    - AI assistant settings per flow
+    
+    <Accordion title="Flow Structure">
+      Each flow contains:
+      - **Name and ID**: Flow identifier
+      - **Keywords**: Trigger words for the flow
+      - **Answers**: Bot responses and actions
+      - **Options**: Flow behavior settings
+      - **Plugins**: Integrations (OpenAI, etc.)
+    </Accordion>
+  </Tab>
+  
+  <Tab title="View Prompts">
+    ### Viewing AI Prompts
+    
+    Click **"Ver Prompts"** to see:
+    
+    - All AI assistant instructions across flows
+    - Flow name for each prompt
+    - Full prompt text for review
+    
+    <Info>
+      Prompts are extracted from the OpenAI plugin configuration in flow answers.
+    </Info>
+  </Tab>
+</Tabs>
+
+### System Prompt Display
+
+The detail panel shows the bot's system instruction:
+
+```typescript
+// Displayed in a code block style
+<div className="bg-slate-800 text-slate-200 font-mono">
+  {bot.systemInstruction}
+</div>
+```
+
+<Note>
+  The system prompt defines the bot's core behavior and personality across all conversations.
+</Note>
+
+### Bot Metrics
+
+The detail panel displays:
+
+<CardGroup cols={2}>
+  <Card title="Current Status" icon="signal">
+    Real-time connection status with color-coded indicator
+  </Card>
+  
+  <Card title="Uptime" icon="clock">
+    Live timer when online, or last active duration when offline
+  </Card>
+  
+  <Card title="BuilderBot ID" icon="fingerprint">
+    Platform identifier for API connections
+  </Card>
+  
+  <Card title="Timestamps" icon="calendar">
+    Creation date and last synchronization time
+  </Card>
+</CardGroup>
+
+## Real-time Updates
+
+The Bots module includes automatic status polling:
+
+```typescript
+useMemo(() => {
+  const intervalId = setInterval(() => {
+    fetchAndProcessBots(false); // Background polling
+  }, 5000); // Every 5 seconds
+  
+  return () => clearInterval(intervalId);
+}, [fetchAndProcessBots]);
+```
+
+<Info>
+  Bot status updates automatically every 5 seconds without requiring page refresh.
+</Info>
+
+## Online Timer
+
+When bots are active, a live timer shows uptime:
+
+```typescript
+const OnlineTimer: React.FC<{ onlineSince: string }> = ({ onlineSince }) => {
+  const [duration, setDuration] = useState(
+    Date.now() - new Date(onlineSince).getTime()
+  );
+  
+  // Updates every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setDuration(Date.now() - new Date(onlineSince).getTime());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [onlineSince]);
+  
+  return <>{formatTimer(duration)}</>; // HH:MM:SS format
+};
+```
+
+## Flow Data Structure
+
+Conversation flows retrieved from BuilderBot:
+
+```typescript
+interface Flow {
+  id: string;
+  name: string;
+  label: string;
+  keyword: string[];           // Trigger words
+  answers: Answer[];           // Bot responses
+  options: FlowOptions;        // Flow settings
+  botId: string;
+  // ... timestamps and metadata
+}
+
+interface Answer {
+  message: string;             // Response text
+  type: string;                // Message type
+  plugins: Plugins;            // Integrations
+  options: AnswerOptions;      // Response behavior
+  // ... configuration
+}
+```
+
+## AI Integration
+
+Bots integrate with OpenAI through flow configurations:
+
+```typescript
+interface OpenAiSettings {
+  assistantId: string;
+  assistantName: string;
+  assistantInstructions: string;      // AI prompt
+  assistantVectorStoreIds: string[];  // Knowledge base
+  assistantFileSearch: boolean;
+  assistantModel: string;             // e.g., "gpt-4"
+  assistantProvider: string;
+}
+```
+
+<Accordion title="Extracting Prompts">
+  The system extracts AI prompts from flows:
+  
+  ```typescript
+  flowsData.forEach(flow => {
+    flow.answers.forEach(answer => {
+      if (answer.plugins?.openai?.assistantInstructions) {
+        prompts.push({
+          flowName: flow.name,
+          prompt: answer.plugins.openai.assistantInstructions
+        });
+      }
+    });
+  });
+  ```
+</Accordion>
+
+## Bot Operations
+
+The Bots component handles these operations:
+
+```typescript
+// Fetch all bots
+const data = await getBots();
+
+// Create new bot
+const newBot = await addBot(botData);
+
+// Update bot configuration
+const savedBot = await updateBot(botToUpdate);
+
+// Delete bot
+await deleteBot(botId);
+
+// Connection management
+await connectBot(botId);
+await disconnectBot(botId);
+
+// Retrieve bot data
+const qrData = await getBotQrCode(id_builderBot);
+const flows = await getBotFlows(id_builderBot);
+```
+
+## QR Code Generation
+
+When a bot is ready to connect:
+
+<Steps>
+  <Step title="Status Check">
+    System detects bot status is "READY_TO_SCAN"
+  </Step>
+  
+  <Step title="Fetch QR">
+    Automatically requests QR code from BuilderBot API
+  </Step>
+  
+  <Step title="Display">
+    Shows QR code image in detail panel
+  </Step>
+  
+  <Step title="Scan">
+    User scans with WhatsApp to complete connection
+  </Step>
+</Steps>
+
+<Warning>
+  QR codes may have a limited validity period. If connection fails, try reconnecting to generate a fresh QR code.
+</Warning>
+
+## Responsive Layout
+
+The Bots interface adapts to screen size:
+
+- **Mobile**: Full-screen detail view
+- **Tablet**: 8:4 split (list:detail)
+- **Desktop**: 7:5 split with sticky detail panel
+
+```typescript
+<div className="grid grid-cols-1 md:grid-cols-12 md:gap-8">
+  <div className={`${selectedBot ? 'hidden md:block md:col-span-8' : 'col-span-12'}`}>
+    {/* Bot grid */}
+  </div>
+  {selectedBot && (
+    <aside className="md:col-span-4 lg:col-span-5">
+      {/* Detail panel */}
+    </aside>
+  )}
+</div>
+```
+
+## Best Practices
+
+<Steps>
+  <Step title="Clear Instructions">
+    Write detailed system instructions that define bot personality and behavior clearly.
+  </Step>
+  
+  <Step title="Monitor Status">
+    Check bot status regularly to ensure continuous availability.
+  </Step>
+  
+  <Step title="Test Flows">
+    Review conversation flows periodically to ensure they meet user needs.
+  </Step>
+  
+  <Step title="Update Prompts">
+    Refine AI prompts based on conversation quality and user feedback.
+  </Step>
+  
+  <Step title="Backup Configuration">
+    Keep records of bot configurations and prompts for disaster recovery.
+  </Step>
+</Steps>
+
+## BuilderBot Integration
+
+<CardGroup cols={2}>
+  <Card title="Platform Connection" icon="plug">
+    Bots connect to BuilderBot platform using unique ID and API key.
+  </Card>
+  
+  <Card title="WhatsApp Bridge" icon="bridge">
+    BuilderBot handles WhatsApp Business API integration.
+  </Card>
+  
+  <Card title="Flow Management" icon="diagram-project">
+    Conversation flows are defined in BuilderBot and synced to GestorPro.
+  </Card>
+  
+  <Card title="AI Processing" icon="brain">
+    OpenAI integration processes messages based on configured prompts.
+  </Card>
+</CardGroup>
+
+<Note>
+  You need a BuilderBot account and bot configuration before connecting bots in GestorPro.
+</Note>

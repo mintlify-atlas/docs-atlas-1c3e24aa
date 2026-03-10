@@ -1,122 +1,111 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "GestorPro",
+  "theme": "almond",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#6366f1",
+    "light": "#818cf8",
+    "dark": "#4f46e5"
   },
   "favicon": "/favicon.svg",
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/sanfosx/GestorPro"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/sanfosx/GestorPro"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Getting Started",
             "pages": [
-              "index",
+              "introduction",
               "quickstart",
-              "development"
+              "installation"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Core Features",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "features/authentication",
+              "features/projects",
+              "features/clients",
+              "features/bots"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Configuration",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "configuration/google-apps-script",
+              "configuration/environment-variables",
+              "configuration/deployment"
             ]
           },
           {
-            "group": "AI tools",
+            "group": "User Guide",
             "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "guides/managing-projects",
+              "guides/managing-clients",
+              "guides/creating-bots",
+              "guides/bot-flows"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Client API",
             "pages": [
-              "api-reference/introduction"
+              "api/clients/overview",
+              "api/clients/get-clients",
+              "api/clients/add-client",
+              "api/clients/update-client",
+              "api/clients/delete-client"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Project API",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api/projects/overview",
+              "api/projects/get-projects",
+              "api/projects/add-project",
+              "api/projects/update-project",
+              "api/projects/delete-project"
+            ]
+          },
+          {
+            "group": "Bot API",
+            "pages": [
+              "api/bots/overview",
+              "api/bots/get-bots",
+              "api/bots/add-bot",
+              "api/bots/update-bot",
+              "api/bots/connect-bot",
+              "api/bots/disconnect-bot",
+              "api/bots/get-qr-code",
+              "api/bots/get-flows"
+            ]
+          },
+          {
+            "group": "Notes & Resources",
+            "pages": [
+              "api/notes/overview",
+              "api/links/overview",
+              "api/prompts/overview"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

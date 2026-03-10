@@ -1,0 +1,225 @@
+---
+title: 'getProjects()'
+description: 'Retrieve all projects from the system'
+---
+
+## Method Signature
+
+```typescript
+export const getProjects = async (): Promise<Project[]>
+```
+
+**Source:** `~/workspace/source/services/api.ts:120`
+
+Retrieves all projects stored in the Google Sheets backend. This method requires an authenticated session with a valid sheet ID.
+
+## Parameters
+
+This method takes no parameters.
+
+## Return Type
+
+<ResponseField name="Promise<Project[]>" type="Project[]">
+  Returns a promise that resolves to an array of Project objects.
+  
+  <Expandable title="Project Interface">
+    <ResponseField name="id" type="string" required>
+      Unique identifier for the project
+    </ResponseField>
+    
+    <ResponseField name="name" type="string" required>
+      Project name
+    </ResponseField>
+    
+    <ResponseField name="clientId" type="string" required>
+      ID of the associated client
+    </ResponseField>
+    
+    <ResponseField name="clientName" type="string">
+      Name of the associated client (optional, populated by backend)
+    </ResponseField>
+    
+    <ResponseField name="startDate" type="string" required>
+      Project start date in ISO format
+    </ResponseField>
+    
+    <ResponseField name="endDate" type="string" required>
+      Project end date in ISO format
+    </ResponseField>
+    
+    <ResponseField name="budget" type="number" required>
+      Project budget in currency units
+    </ResponseField>
+    
+    <ResponseField name="status" type="ProjectStatus" required>
+      Current project status
+      
+      <Expandable title="ProjectStatus Enum Values">
+        - `ProjectStatus.NotStarted` - 'No Iniciado'
+        - `ProjectStatus.InProgress` - 'En Progreso'
+        - `ProjectStatus.Completed` - 'Completado'
+        - `ProjectStatus.OnHold` - 'En Pausa'
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Implementation Details
+
+The method internally calls:
+
+```typescript
+return callAppsScript('getProjects');
+```
+
+This sends a request to the Google Apps Script backend with:
+- Action: `'getProjects'`
+- Payload: None (only session data is included)
+- Sheet ID: Extracted from `localStorage` user session
+
+## Code Examples
+
+<CodeGroup>
+
+```typescript Basic Usage
+import { getProjects } from './services/api';
+import type { Project } from './types';
+
+const projects: Project[] = await getProjects();
+console.log(`Total projects: ${projects.length}`);
+```
+
+```typescript With Error Handling
+import { getProjects } from './services/api';
+import type { Project } from './types';
+
+try {
+  const projects: Project[] = await getProjects();
+  
+  if (projects.length === 0) {
+    console.log('No projects found');
+  } else {
+    projects.forEach(project => {
+      console.log(`${project.name} - ${project.status}`);
+    });
+  }
+} catch (error) {
+  if (error instanceof Error) {
+    if (error.message.includes('not authenticated')) {
+      // Redirect to login
+      window.location.href = '/login';
+    } else {
+      console.error('Failed to fetch projects:', error.message);
+    }
+  }
+}
+```
+
+```typescript Filtering Projects
+import { getProjects, ProjectStatus } from './services/api';
+
+const projects = await getProjects();
+
+// Filter by status
+const inProgressProjects = projects.filter(
+  p => p.status === ProjectStatus.InProgress
+);
+
+// Filter by client
+const clientProjects = projects.filter(
+  p => p.clientId === 'client-123'
+);
+
+// Filter by date range
+const activeProjects = projects.filter(p => {
+  const start = new Date(p.startDate);
+  const end = new Date(p.endDate);
+  const now = new Date();
+  return start <= now && now <= end;
+});
+```
+
+```typescript React Component
+import { useEffect, useState } from 'react';
+import { getProjects } from './services/api';
+import type { Project } from './types';
+
+function ProjectList() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        const data = await getProjects();
+        setProjects(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchProjects();
+  }, []);
+
+  if (loading) return <div>Loading projects...</div>;
+  if (error) return <div>Error: {error}</div>;
+  
+  return (
+    <ul>
+      {projects.map(project => (
+        <li key={project.id}>
+          {project.name} - {project.status}
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+</CodeGroup>
+
+## Error Scenarios
+
+<Note>
+  This method requires a valid authenticated session. Always wrap calls in try-catch blocks.
+</Note>
+
+### Authentication Errors
+
+```typescript
+// Thrown when no session exists in localStorage
+throw new Error('User is not authenticated. No session found.');
+
+// Thrown when session is missing sheet ID
+throw new Error('ID de hoja de cálculo no encontrado en la sesión.');
+```
+
+### Network Errors
+
+```typescript
+// Thrown when backend is unreachable
+throw new Error('Failed to fetch');
+
+// Thrown when backend returns empty response
+throw new Error('Respuesta vacía del servidor de Apps Script.');
+
+// Thrown when response is not valid JSON
+throw new Error('La respuesta del backend no es un JSON válido.');
+```
+
+### Backend Errors
+
+```typescript
+// Thrown when backend returns success: false
+throw new Error(response.error || 'Error desconocido en el script de Google.');
+```
+
+## Related Methods
+
+- [addProject()](/api/projects/add-project) - Create a new project
+- [updateProject()](/api/projects/update-project) - Update existing project
+- [deleteProject()](/api/projects/delete-project) - Delete a project
+- [getClients()](/api/clients/get-clients) - Get all clients to resolve clientId
