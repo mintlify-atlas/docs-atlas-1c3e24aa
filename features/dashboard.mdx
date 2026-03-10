@@ -1,0 +1,235 @@
+---
+title: "Dashboard"
+description: "Interactive analytics and business intelligence dashboard with real-time metrics and visualizations"
+---
+
+## Overview
+
+The GestorPro Dashboard provides a comprehensive overview of your business operations at a glance. It aggregates data from projects, clients, and bots to deliver actionable insights through summary cards, interactive charts, and upcoming deliveries tracking.
+
+<Note>
+  The dashboard automatically refreshes bot status data every 30 seconds to keep metrics up to date.
+</Note>
+
+## Key Metrics
+
+The dashboard displays five key performance indicators in summary cards:
+
+<CardGroup cols={2}>
+  <Card title="Total Projects" icon="briefcase">
+    Displays the total number of projects across all statuses
+  </Card>
+  <Card title="Total Clients" icon="users">
+    Shows the complete count of clients in your portfolio
+  </Card>
+  <Card title="Active Bots" icon="robot">
+    Tracks bots currently online and available (auto-updates every 30 seconds)
+  </Card>
+  <Card title="Total Budget" icon="wallet">
+    Aggregates the combined budget of all projects in thousands
+  </Card>
+  <Card title="Active Projects" icon="cogs">
+    Counts projects currently in the "In Progress" status
+  </Card>
+</CardGroup>
+
+## Summary Cards
+
+Each summary card displays:
+- **Title**: Metric name and purpose
+- **Value**: Current count or calculated amount
+- **Icon**: Visual identifier with color coding
+- **Hover effect**: Interactive scale animation
+
+```typescript Dashboard.tsx:109-115
+<SummaryCard title="Total de Proyectos" value={projects.length} icon="fa-briefcase" color="bg-blue-500" />
+<SummaryCard title="Total de Clientes" value={clients.length} icon="fa-users" color="bg-green-500" />
+<SummaryCard title="Bots Activos" value={activeBotsCount} icon="fa-robot" color="bg-purple-500" />
+<SummaryCard title="Presupuesto Total" value={`$${(totalBudget / 1000).toFixed(0)}k`} icon="fa-wallet" color="bg-yellow-500" />
+<SummaryCard title="Proyectos Activos" value={projects.filter(p => p.status === ProjectStatus.InProgress).length} icon="fa-cogs" color="bg-red-500" />
+```
+
+### Color Scheme
+
+- **Blue** (Projects) - Primary business operations
+- **Green** (Clients) - Growth and relationships
+- **Purple** (Bots) - AI and automation
+- **Yellow** (Budget) - Financial metrics
+- **Red** (Active Projects) - Urgent/in-progress work
+
+## Project Status Chart
+
+The dashboard features an interactive bar chart visualizing project distribution across four status categories:
+
+<Tabs>
+  <Tab title="Status Categories">
+    - **No Iniciado** (Not Started) - Projects awaiting kickoff
+    - **En Progreso** (In Progress) - Active projects underway
+    - **Completado** (Completed) - Finished projects
+    - **En Pausa** (On Hold) - Temporarily suspended projects
+  </Tab>
+  <Tab title="Chart Features">
+    - Responsive layout adapting to screen size
+    - Interactive tooltips on hover
+    - Gridlines for easy value reading
+    - Bar radius for modern aesthetics
+    - Indigo color matching brand theme
+  </Tab>
+</Tabs>
+
+```typescript Dashboard.tsx:81-92
+const projectStatusData = useMemo(() => {
+  const statusCounts = {
+    [ProjectStatus.NotStarted]: 0,
+    [ProjectStatus.InProgress]: 0,
+    [ProjectStatus.Completed]: 0,
+    [ProjectStatus.OnHold]: 0,
+  };
+  projects.forEach(p => {
+    statusCounts[p.status]++;
+  });
+  return Object.entries(statusCounts).map(([name, value]) => ({ name, proyectos: value }));
+}, [projects]);
+```
+
+The chart uses Recharts library for data visualization with optimized rendering performance.
+
+## Upcoming Deliveries
+
+The dashboard displays the next four upcoming project deadlines to help prioritize work:
+
+**Display Logic:**
+1. Filters out completed projects
+2. Filters out past deadlines
+3. Sorts by end date (earliest first)
+4. Shows top 4 upcoming deliveries
+
+**Information Shown:**
+- Project name
+- Associated client name
+- Delivery date (formatted)
+- Visual card layout
+
+```typescript Dashboard.tsx:134-147
+{projects
+  .filter(p => p.status !== ProjectStatus.Completed && new Date(p.endDate) > new Date())
+  .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime())
+  .slice(0, 4)
+  .map(project => (
+    <div key={project.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+      <div>
+        <p className="font-semibold text-gray-800">{project.name}</p>
+        <p className="text-sm text-gray-500">{project.clientName}</p>
+      </div>
+      <span className="font-medium text-indigo-600">{new Date(project.endDate).toLocaleDateString()}</span>
+    </div>
+  ))
+}
+```
+
+<Info>
+  If no upcoming deliveries exist, the dashboard displays a friendly "No hay entregas pendientes" message.
+</Info>
+
+## Data Loading
+
+The dashboard implements a dual-loading strategy for optimal performance:
+
+<Steps>
+  <Step title="Initial Load">
+    Fetches all data in parallel using `Promise.all` for projects, clients, and bots
+  </Step>
+  <Step title="Real-time Updates">
+    Polls bot status every 30 seconds to keep the "Active Bots" metric current
+  </Step>
+  <Step title="Loading State">
+    Displays an animated spinner during initial data fetch
+  </Step>
+</Steps>
+
+```typescript Dashboard.tsx:34-56
+useEffect(() => {
+  const fetchInitialData = async () => {
+    setLoading(true);
+    try {
+      const [projectsData, clientsData, botsData] = await Promise.all([
+        getProjects(), 
+        getClients(),
+        getBots()
+      ]);
+      setProjects(projectsData);
+      setClients(clientsData);
+      const activeBots = botsData.filter(bot => 
+        bot.status?.toUpperCase() === 'ONLINE' || bot.status?.toUpperCase() === 'ACTIVE'
+      ).length;
+      setActiveBotsCount(activeBots);
+    } catch (error) {
+      console.error("Error al cargar datos del dashboard:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchInitialData();
+}, []);
+```
+
+## Performance Optimizations
+
+The dashboard uses several React performance patterns:
+
+<AccordionGroup>
+  <Accordion title="useMemo for Expensive Calculations">
+    Total budget and project status data are memoized to prevent unnecessary recalculations
+  </Accordion>
+  <Accordion title="Parallel Data Fetching">
+    All initial data loads simultaneously using `Promise.all` instead of sequential requests
+  </Accordion>
+  <Accordion title="Selective Polling">
+    Only bot data refreshes periodically; projects and clients load once on mount
+  </Accordion>
+  <Accordion title="Cleanup on Unmount">
+    The bot polling interval is cleared when the component unmounts to prevent memory leaks
+  </Accordion>
+</AccordionGroup>
+
+## Responsive Design
+
+The dashboard adapts gracefully to different screen sizes:
+
+- **Mobile** (< 640px): Single column layout, stacked cards
+- **Tablet** (640px - 1024px): 2-column summary cards, stacked chart and deliveries
+- **Desktop** (> 1024px): 5-column summary cards, side-by-side chart and deliveries
+
+## Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Daily Check-ins" icon="calendar-day">
+    Quick morning overview of business health and priorities
+  </Card>
+  <Card title="Client Meetings" icon="handshake">
+    Present high-level metrics and project status at a glance
+  </Card>
+  <Card title="Resource Planning" icon="chart-gantt">
+    Identify workload distribution and upcoming deadlines
+  </Card>
+  <Card title="Bot Monitoring" icon="robot">
+    Track AI assistant availability and uptime
+  </Card>
+</CardGroup>
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Projects" icon="briefcase" href="/features/projects">
+    Deep dive into project management
+  </Card>
+  <Card title="Clients" icon="users" href="/features/clients">
+    Manage your client portfolio
+  </Card>
+  <Card title="Bots" icon="robot" href="/features/bots">
+    Configure and monitor AI chatbots
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/projects/overview">
+    Access data programmatically
+  </Card>
+</CardGroup>

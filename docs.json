@@ -36,6 +36,7 @@
             "group": "Core Features",
             "pages": [
               "features/authentication",
+              "features/dashboard",
               "features/projects",
               "features/clients",
               "features/bots"
@@ -68,6 +69,7 @@
             "pages": [
               "api/clients/overview",
               "api/clients/get-clients",
+              "api/clients/get-client-by-phone",
               "api/clients/add-client",
               "api/clients/update-client",
               "api/clients/delete-client"
