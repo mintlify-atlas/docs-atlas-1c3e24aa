@@ -1,0 +1,139 @@
+{
+  "projectType": "saas",
+  "projectName": "GestorPro",
+  "projectDescription": "A comprehensive business management platform with multi-tenant architecture, AI-powered chatbots, and Google Sheets backend integration",
+  "theme": "almond",
+  "primaryColor": "#6366f1",
+  "lightColor": "#818cf8",
+  "darkColor": "#4f46e5",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/authentication",
+              "features/projects",
+              "features/clients",
+              "features/bots"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/google-apps-script",
+              "configuration/environment-variables",
+              "configuration/deployment"
+            ]
+          },
+          {
+            "group": "User Guide",
+            "pages": [
+              "guides/managing-projects",
+              "guides/managing-clients",
+              "guides/creating-bots",
+              "guides/bot-flows"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Client API",
+            "pages": [
+              "api/clients/overview",
+              "api/clients/get-clients",
+              "api/clients/add-client",
+              "api/clients/update-client",
+              "api/clients/delete-client"
+            ]
+          },
+          {
+            "group": "Project API",
+            "pages": [
+              "api/projects/overview",
+              "api/projects/get-projects",
+              "api/projects/add-project",
+              "api/projects/update-project",
+              "api/projects/delete-project"
+            ]
+          },
+          {
+            "group": "Bot API",
+            "pages": [
+              "api/bots/overview",
+              "api/bots/get-bots",
+              "api/bots/add-bot",
+              "api/bots/update-bot",
+              "api/bots/connect-bot",
+              "api/bots/disconnect-bot",
+              "api/bots/get-qr-code",
+              "api/bots/get-flows"
+            ]
+          },
+          {
+            "group": "Notes & Resources",
+            "pages": [
+              "api/notes/overview",
+              "api/links/overview",
+              "api/prompts/overview"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Multi-tenant architecture with isolated Google Sheets databases per user",
+    "Token-based authentication with email and WhatsApp verification",
+    "Project and client management with status tracking and budget monitoring",
+    "AI-powered chatbot management with WhatsApp integration via BuilderBot",
+    "Real-time bot status monitoring and flow management",
+    "Project-linked notes, links, and AI prompts for organized collaboration",
+    "Interactive dashboard with analytics and upcoming deliveries",
+    "Responsive design with mobile-friendly interface"
+  ],
+  "publicApiSurface": [
+    "getClients(): Promise<Client[]>",
+    "getClientByPhone(phone: string): Promise<Client | null>",
+    "addClient(clientData: Omit<Client, 'id'>): Promise<Client>",
+    "updateClient(clientData: Client): Promise<Client>",
+    "deleteClient(clientId: string): Promise<{ success: boolean }>",
+    "getProjects(): Promise<Project[]>",
+    "addProject(projectData: Omit<Project, 'id' | 'clientName'>): Promise<Project>",
+    "updateProject(projectData: Omit<Project, 'clientName'>): Promise<Project>",
+    "deleteProject(projectId: string): Promise<{ success: boolean }>",
+    "getBots(): Promise<Bot[]>",
+    "addBot(botData): Promise<Bot>",
+    "updateBot(botData: Bot): Promise<Bot>",
+    "deleteBot(botId: string): Promise<{ success: boolean }>",
+    "connectBot(botId: string): Promise<{ success: boolean }>",
+    "disconnectBot(botId: string): Promise<{ success: boolean }>",
+    "getBotQrCode(builderBotId: string): Promise<{ qr: string }>",
+    "getBotFlows(builderBotId: string): Promise<Flow[]>",
+    "getNotesByProjectId(projectId: string): Promise<Note[]>",
+    "addNote(noteData): Promise<Note>",
+    "updateNote(noteData: Note): Promise<Note>",
+    "deleteNote(noteId: string): Promise<{ success: boolean }>",
+    "getLinksByProjectId(projectId: string): Promise<Link[]>",
+    "addLink(linkData): Promise<Link>",
+    "updateLink(linkData: Link): Promise<Link>",
+    "deleteLink(linkId: string): Promise<{ success: boolean }>",
+    "getPromptsByProjectId(projectId: string): Promise<Prompt[]>",
+    "addPrompt(promptData): Promise<Prompt>",
+    "updatePrompt(promptData: Prompt): Promise<Prompt>",
+    "deletePrompt(promptId: string): Promise<{ success: boolean }>"
+  ]
+}
